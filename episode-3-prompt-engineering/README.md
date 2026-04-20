@@ -4,6 +4,13 @@
 - 4 production-ready prompt templates for SRE workflows
 - Prompt testing framework with automated assertions
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+```
+
 ## Files
 
 | File | Description |

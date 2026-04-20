@@ -4,6 +4,13 @@
 - Generate Dockerfile + K8s manifests + docker-compose from one analysis
 - Score manifests on 5 production-readiness dimensions
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+```
+
 ## Files
 
 | File | Description |

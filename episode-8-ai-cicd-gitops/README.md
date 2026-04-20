@@ -5,6 +5,15 @@
 - Pipeline optimization and smart pipeline generation
 - GitOps risk assessment for ArgoCD syncs
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic PyGithub
+brew install gh
+gh auth login
+```
+
 ## Files
 
 | File | Description |

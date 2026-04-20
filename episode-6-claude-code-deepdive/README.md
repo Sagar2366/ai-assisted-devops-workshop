@@ -5,6 +5,13 @@
 - PreToolUse safety hooks — block dangerous commands before execution
 - PostToolUse audit hooks — log all tool executions to JSON
 
+## Setup
+
+```bash
+npm install -g @anthropic-ai/claude-code
+claude --version
+```
+
 ## Files
 
 | File | Description |

@@ -6,6 +6,13 @@
 - MCP (Model Context Protocol) — the universal adapter
 - Your first Claude API call with SRE context
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+```
+
 ## Files
 
 | File | Description |

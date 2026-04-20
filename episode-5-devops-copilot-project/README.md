@@ -5,6 +5,15 @@
 - Audit logging for every tool execution
 - Interactive CLI: diagnose, health, investigate, ask
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+kind create cluster --name workshop
+kubectl apply -f test_workloads.yaml
+```
+
 ## Files
 
 | File | Description |

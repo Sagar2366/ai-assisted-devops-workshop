@@ -4,6 +4,14 @@
 - K8s manifest security scanner (CIS Benchmark + NSA-CISA guidelines)
 - Cluster cost optimization with right-sizing recommendations
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+brew install terraform  # optional
+```
+
 ## Files
 
 | File | Description |

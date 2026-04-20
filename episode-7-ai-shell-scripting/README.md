@@ -4,6 +4,13 @@
 - Fix broken scripts automatically (find bugs, suggest fixes)
 - Convert one-liners to parameterized production scripts
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic
+```
+
 ## Files
 
 | File | Description |

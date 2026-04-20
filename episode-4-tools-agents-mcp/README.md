@@ -5,6 +5,14 @@
 - Tool definitions for Claude API (JSON schema)
 - MCP server that exposes K8s tools to any AI client
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic "mcp[cli]"
+kind create cluster --name workshop
+```
+
 ## Files
 
 | File | Description |

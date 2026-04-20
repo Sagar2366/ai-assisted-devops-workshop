@@ -5,6 +5,15 @@
 - 3 specialized agents: Diagnosis, Incident Response, Security Scanning
 - FastAPI gateway with webhook receiver for Alertmanager/GitHub
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic fastapi uvicorn pydantic
+kind create cluster --name workshop
+kubectl apply -f ../episode-5-devops-copilot-project/test_workloads.yaml
+```
+
 ## Files
 
 | File | Description |

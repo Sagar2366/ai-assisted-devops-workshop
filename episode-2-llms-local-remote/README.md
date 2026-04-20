@@ -6,6 +6,18 @@
 - AWS Bedrock — enterprise multi-model access
 - Unified client that switches backends with one parameter
 
+## Setup
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+pip install anthropic openai requests boto3
+
+# Local LLM
+brew install ollama
+ollama serve &
+ollama pull qwen2.5-coder:7b
+```
+
 ## Files
 
 | File | Description |
