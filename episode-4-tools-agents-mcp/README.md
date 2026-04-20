@@ -1,0 +1,15 @@
+# Episode 4: Building Tools, Agents & MCP Servers
+
+- Build 6 Kubernetes tools with safety guardrails
+- The core agent loop pattern (observe → think → act → evaluate)
+- Tool definitions for Claude API (JSON schema)
+- MCP server that exposes K8s tools to any AI client
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `k8s_tools.py` | 6 tool functions: kubectl, pod logs, cluster health, Prometheus query, scale, rollback |
+| `tool_definitions.py` | Claude API tool schemas for all 6 tools |
+| `agent_loop.py` | Core agent loop |
+| `mcp_server.py` | MCP server for Kubernetes (FastMCP) |

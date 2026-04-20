@@ -1,0 +1,39 @@
+# Episode 10: AI-Powered Deployment Automation
+# Deliberately minimal/broken Kubernetes manifest for demo testing.
+#
+# This manifest is intentionally missing production-readiness features:
+#   - Uses :latest tag
+#   - Hardcoded database credentials in environment variable
+#   - Only 1 replica (no high availability)
+#   - No resource requests or limits
+#   - No liveness/readiness probes
+#   - No security context
+#   - No PodDisruptionBudget
+#   - No anti-affinity rules
+#
+# Author: Sagar Utekar
+# Prerequisites: kubectl, a running Kubernetes cluster (e.g., kind)
+# Usage: python3 improver.py minimal_manifest.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+    spec:
+      containers:
+      - name: api
+        image: mycompany/api-server:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://admin:password123@db:5432/myapp"

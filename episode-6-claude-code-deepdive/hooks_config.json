@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "Episode 6: Claude Code Deep Dive for DevOps",
+    "AI-Assisted DevOps Workshop",
+    "Author: Sagar Utekar",
+    "",
+    "Prerequisites:",
+    "  - Claude Code installed (npm install -g @anthropic-ai/claude-code)",
+    "  - safety_hook.py and audit_hook.py in the same directory",
+    "",
+    "Usage:",
+    "  Copy this file to .claude/settings.json in your project root.",
+    "  Update the paths to point to your actual hook script locations."
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "python3 /path/to/hooks/safety_check.py \"$TOOL_INPUT\""
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "python3 /path/to/hooks/audit_log.py \"$TOOL_NAME\" \"$TOOL_INPUT\""
+      }
+    ]
+  }
+}
