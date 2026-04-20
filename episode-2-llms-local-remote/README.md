@@ -6,6 +6,25 @@
 - AWS Bedrock — enterprise multi-model access
 - Unified client that switches backends with one parameter
 
+```
+┌──────────────────────────────────────────────┐
+│  ENTERPRISE RING (Bedrock / Azure OpenAI)    │
+│  IAM auth, compliance logs, audit trail      │
+│                                              │
+│  ┌──────────────────────────────────────┐    │
+│  │  CLOUD RING (Claude API / OpenAI)    │    │
+│  │  Best reasoning, 200K context        │    │
+│  │                                      │    │
+│  │  ┌──────────────────────────────┐    │    │
+│  │  │  LOCAL RING (Ollama)         │    │    │
+│  │  │  Free, private, air-gapped   │    │    │
+│  │  │  Start here. Move out only   │    │    │
+│  │  │  when you NEED to.           │    │    │
+│  │  └──────────────────────────────┘    │    │
+│  └──────────────────────────────────────┘    │
+└──────────────────────────────────────────────┘
+```
+
 ## Setup
 
 ```bash

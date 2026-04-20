@@ -5,6 +5,14 @@
 - PreToolUse safety hooks — block dangerous commands before execution
 - PostToolUse audit hooks — log all tool executions to JSON
 
+```
+Contextual Exoskeleton — configure once, use daily:
+
+  CLAUDE.md     → MEMORY      (infra context, runbooks, conventions)
+  MCP Servers   → HANDS       (K8s cluster, Prometheus, GitHub)
+  Hooks         → REFLEXES    (safety checks, audit logging)
+```
+
 ## Setup
 
 ```bash

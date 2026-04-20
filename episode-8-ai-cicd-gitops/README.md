@@ -5,6 +5,22 @@
 - Pipeline optimization and smart pipeline generation
 - GitOps risk assessment for ArgoCD syncs
 
+```
+Intelligence Injection Points — 5 stages where AI adds value:
+
+  PR Open         →  AI Code Review        (ai_review.py)
+       ↓
+  Build Fails     →  AI Failure Analysis   (ci_fix_agent.py)
+       ↓
+  Pipeline Runs   →  AI Optimization       (pipeline_optimizer.py)
+       ↓
+  Deploy Trigger  →  AI Risk Assessment    (gitops_ai_sync.py)
+       ↓
+  Post-Deploy     →  AI Monitoring         (coming in Ep 11)
+
+Start with ONE injection point. Not all five.
+```
+
 ## Setup
 
 ```bash

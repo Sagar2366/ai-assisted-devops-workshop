@@ -5,6 +5,20 @@
 - Audit logging for every tool execution
 - Interactive CLI: diagnose, health, investigate, ask
 
+```
+SRE Diagnostic Ladder (never skip a rung):
+
+  1. BROAD     → kubectl get pods -A (what's the overall state?)
+       ↓
+  2. NARROW    → kubectl describe pod <failing-pod>
+       ↓
+  3. DEEP      → kubectl logs <pod> --previous
+       ↓
+  4. ACT       → kubectl rollout restart / scale / patch
+       ↓
+  5. VERIFY    → kubectl get pods (did it work?)
+```
+
 ## Setup
 
 ```bash

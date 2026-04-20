@@ -4,6 +4,20 @@
 - Generate Dockerfile + K8s manifests + docker-compose from one analysis
 - Score manifests on 5 production-readiness dimensions
 
+```
+The Deployment Matrix:
+
+              Manual    Scripted    AI-Generated
+            ┌─────────┬──────────┬──────────────┐
+  VM        │         │          │              │
+  Container │         │          │   ← this     │
+  K8s       │         │          │   ← episode  │
+  Serverless│         │          │              │
+            └─────────┴──────────┴──────────────┘
+
+  analyzer.py detects your app → triple_generator.py picks the right cell
+```
+
 ## Setup
 
 ```bash

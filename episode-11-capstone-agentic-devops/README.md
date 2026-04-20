@@ -5,6 +5,31 @@
 - 3 specialized agents: Diagnosis, Incident Response, Security Scanning
 - FastAPI gateway with webhook receiver for Alertmanager/GitHub
 
+```
+                    ┌──────────────────────┐
+                    │    FastAPI Gateway    │
+                    │   /diagnose /incident │
+                    │   /scan /webhook      │
+                    └──────────┬───────────┘
+                               │
+                    ┌──────────▼───────────┐
+                    │    Orchestrator       │
+                    │  (routes to agents)   │
+                    └───┬──────┬───────┬───┘
+                        │      │       │
+               ┌────────▼┐ ┌──▼─────┐ ┌▼────────┐
+               │Diagnosis│ │Incident│ │Security  │
+               │ Agent   │ │ Agent  │ │ Agent    │
+               └────┬────┘ └───┬────┘ └────┬────┘
+                    │          │            │
+                    └──────────▼────────────┘
+                    ┌──────────────────────┐
+                    │   Shared SREToolkit   │
+                    │  kubectl, logs, scale │
+                    │  + unified audit log  │
+                    └──────────────────────┘
+```
+
 ## Setup
 
 ```bash

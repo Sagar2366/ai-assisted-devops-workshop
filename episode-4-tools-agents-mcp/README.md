@@ -5,6 +5,24 @@
 - Tool definitions for Claude API (JSON schema)
 - MCP server that exposes K8s tools to any AI client
 
+```
+         ┌─────────┐
+         │   LLM   │ ← BRAIN (reasons, plans, decides)
+         └────┬────┘
+              │
+         ┌────▼────┐
+         │  TOOLS  │ ← HANDS (kubectl, APIs, logs)
+         └────┬────┘
+              │
+         ┌────▼────┐
+         │  LOOP   │ ← AUTONOMY (observe → think → act → evaluate)
+         └────┬────┘
+              │
+         ┌────▼────┐
+         │   MCP   │ ← UNIVERSAL JOINT (standard protocol for all tools)
+         └─────────┘
+```
+
 ## Setup
 
 ```bash

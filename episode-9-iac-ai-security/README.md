@@ -4,6 +4,18 @@
 - K8s manifest security scanner (CIS Benchmark + NSA-CISA guidelines)
 - Cluster cost optimization with right-sizing recommendations
 
+```
+Shift-Left Security Ladder — every issue caught earlier = 1/100th the cost:
+
+  GENERATE  →  Security defaults baked into Terraform at creation
+       ↓
+  SCAN      →  Catch violations before apply (k8s_scanner.py)
+       ↓
+  FIX       →  AI suggests exact remediation
+       ↓
+  MONITOR   →  Continuous scanning in CI/CD
+```
+
 ## Setup
 
 ```bash
