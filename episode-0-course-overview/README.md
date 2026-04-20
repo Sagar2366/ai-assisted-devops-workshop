@@ -1,4 +1,4 @@
-# Episode 0: Course Overview
+# Episode 0: Course Overview — AI-Assisted DevOps
 
 Series roadmap, teaching methodology, and prerequisites checklist. No code in this episode.
 
