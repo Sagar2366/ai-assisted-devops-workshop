@@ -8,13 +8,12 @@
 
 ## What You'll Learn
 
-By the end of this episode, you'll have ONE mental model that makes every AI tool, agent, and buzzword slot into place — plus your first working API call to Claude with SRE context.
+By the end of this episode, you'll have ONE mental model — the Payload Shift — that makes every AI tool, agent, and buzzword slot into place, plus your first working API call to Claude with SRE context.
 
 | Concept | One-Line Summary |
 |---------|-----------------|
 | The Payload Shift | Alerts moved from human dashboards to AI agents. Same infra, new destination. |
-| Traditional AI vs Generative AI | Prediction (you already use `predict_linear()`) vs Creation (generate manifests) |
-| Software Evolution Parallel | Waterfall → Agile → DevOps → AI-Assisted — each era removed one constraint |
+| Five Eras of AI | Rule-based → ML → Deep Learning → LLMs/GenAI → AI Agents. Each removed a constraint. |
 | How LLMs Work | Training data = Docker layers. Weights = image. Inference = running the container. |
 | Context Engineering | 5 things compete for the context window — the #1 skill for building agents |
 | Agents = Brain + Hands + Loop | LLM (brain) + Tools (hands) + Reasoning Loop (autonomy) |
@@ -28,71 +27,56 @@ By the end of this episode, you'll have ONE mental model that makes every AI too
 This is the single most important concept in the entire series. Everything builds on this.
 
 ```
-BEFORE (Traditional SRE)                    AFTER (AI-Augmented SRE)
-
-Alert fires                                 Alert fires
-    |                                           |
-Dashboard → Human reads                     LLM receives alert payload
-    |                                           |
-Human runs kubectl                          LLM runs kubectl (via tools)
-    |                                           |
-Human diagnoses                             LLM reasons about root cause
-    |                                           |
-Human applies fix                           LLM applies fix (with guardrails)
-    |                                           |
-Human writes postmortem at 4 PM             LLM generates postmortem immediately
-
-The PAYLOAD destination shifted             Same infra. New destination.
-from human dashboards to AI agents.         That is the only change.
+BEFORE:  Alert → Dashboard → YOU read → YOU fix → YOU report
+AFTER:   Alert → AI Agent → Agent reads → Agent fixes → Agent reports
 ```
+
+Your alerts, logs, and metrics are the payload. They used to go to human dashboards. Now they go to AI agents. Same data, new destination.
+
+### Real-World Scenarios
+
+| Scenario | Today (Human) | With Agents |
+|---|---|---|
+| **3 AM OOM alert** | You wake up, read dashboard, run kubectl, find the bad deploy, roll back. 45 min. | Agent receives alert, checks logs + recent deploys, rolls back, reports to Slack. 60 sec. |
+| **PR merged to main** | CI runs tests. You manually review for security, performance. You deploy and watch. | Agent reviews diff, generates tests, deploys canary, watches metrics, promotes or rolls back. |
+| **Cloud cost creep** | You run a monthly audit, find idle resources, write Terraform, create PR. Half a day. | Agent scans weekly, finds waste, generates Terraform with cost estimates, creates PR. You approve. |
+| **Cascading failure** | Memory leak → OOM → 12 services down. You spend 45 min finding the root cause. | Agent catches the first OOM, traces the leaking service, rolls back before the cascade. |
 
 ---
 
-## The AI Timeline — Each Era Removed a Constraint
-
-Every era of AI removed one constraint. Understanding this helps you see where agents fit — and why 2025 is different.
+## Five Eras of AI — Each Removed a Constraint
 
 ![Evolution to Agentic Systems](images/evolution-timeline-08.png)
 > *Source: AWS — "Building Agentic Systems" Workshop, 2026*
 
 | Era | Constraint Removed | DevOps Example |
 |-----|-------------------|----------------|
-| Traditional ML (2010-2019) | Manual threshold tuning | `predict_linear()` in Prometheus |
-| Large Language Models (2020-2022) | Structured query requirements | "Show me pods that restarted 3+ times" — no PromQL needed |
-| Generative AI (2023-2024) | Writing everything from scratch | Generate Terraform, Dockerfiles, runbooks in seconds |
-| Agentic AI (2025+) | Human execution speed | Detect → diagnose → fix → verify → report — autonomously |
+| Rule-Based AI (1950s-1980s) | Doing everything manually | Static threshold alerting: "If CPU > 80%, page the engineer" |
+| Machine Learning (1980s-2010s) | Manual threshold tuning | Anomaly detection — predict disk full in 6 hours based on growth patterns |
+| Deep Learning & NLP (2017-2022) | The language barrier | Log classification, intent detection — "Show me pods that keep crashing" works |
+| LLMs & Generative AI (2022-2024) | Writing everything from scratch | Generate Terraform, Dockerfiles, K8s manifests, runbooks in seconds |
+| AI Agents (Today) | Human execution speed | Detect → diagnose → fix → verify → report — autonomously |
 
----
-
-## Software and AI Evolved in Parallel
-
-This is a pattern most people miss. Software delivery and AI followed the same arc — from tightly coupled to specialized and composable. Microservices = specialized agents.
-
-![Software Evolution Parallel](images/software-parallel-09.png)
-> *Source: AWS — "Building Agentic Systems" Workshop, 2026*
-
----
-
-## GenAI vs Agentic AI — Two Fundamentally Different Patterns
-
-This is the most important distinction in AI for DevOps today.
+### LLMs + GenAI vs AI Agents
 
 ![Request-Response vs Agent Loop](images/request-vs-agent-14.png)
 > *Source: AWS — "Building Agentic Systems" Workshop, 2026*
 
-| | Generative AI | Agentic AI |
-|---|---|---|
-| **Analogy** | Stack Overflow | Your senior SRE on-call |
-| **Behavior** | "Here's a Terraform file" | Writes, plans, applies, and verifies the Terraform |
-| **K8s example** | "The pod is OOMKilled" | Detects OOM → patches deployment → confirms fix |
-| **State** | Stateless — one prompt, one response | Stateful — multi-step reasoning with memory |
-| **Tools** | None | kubectl, APIs, logs, Slack |
+| LLMs + GenAI (Era 4) | AI Agents (Era 5) |
+|---|---|
+| "Here's a Terraform file" | Writes, plans, applies, and verifies the Terraform |
+| "The pod is OOMKilled" | Detects OOM, checks resource limits, patches deployment, confirms fix |
+| Answers questions | Completes tasks autonomously |
+| Stateless — one prompt, one response | Stateful — multi-step reasoning with memory |
+| No tools | Has tools — can run kubectl, call APIs, read logs |
+
+**LLMs are Stack Overflow. AI agents are your senior SRE on-call.**
 
 ---
 
-## Context Engineering — The #1 Skill for Building Agents
+## Context Engineering
 
-The context window is NOT just where you put your prompt. Five different things compete for space inside it. Managing this is context engineering — and it's what separates good agents from bad ones.
+The context window is NOT just where you put your prompt — five different things compete for space inside it. Managing this is the #1 skill for building agents.
 
 ![Context Engineering and Memory](images/context-engineering-12.png)
 > *Source: AWS — "Building Agentic Systems" Workshop, 2026*
@@ -107,28 +91,26 @@ The context window is NOT just where you put your prompt. Five different things 
 
 ---
 
-## The 13-Domain Capability Stack
+## MCP & A2A
 
-Most tutorials cover domain 1 (reasoning) and stop. This series covers 10 of 13 domains across 14 episodes.
+| | MCP (Model Context Protocol) | A2A (Agent-to-Agent) |
+|---|---|---|
+| **Connects** | Agents ↔ Tools & Data | Agents ↔ Other Agents |
+| **Analogy** | USB-C port | HTTP between microservices |
+| **When needed** | Single agent using tools | Multi-agent systems |
 
-![The Agentic AI Capability Stack](images/capability-stack-05.png)
-> *Source: AWS — "Building Agentic Systems" Workshop, 2026*
+---
 
-| # | Domain | What It Covers | This Series |
-|---|--------|---------------|-------------|
-| 1 | Agent Reasoning | The think-act-observe loop | Episode 4 |
-| 2 | Tools & Integration | MCP, APIs, kubectl | Episode 4 |
-| 3 | Orchestration | Multi-agent coordination | Episode 11 |
-| 4 | Memory | Short-term + long-term | Episode 6 |
-| 5 | Data & Retrieval | RAG, knowledge bases | Episode 10 |
-| 6 | Agent Routing | Intent → right agent | Episode 11 |
-| 7 | Guardrails & Safety | Input/output validation | Episodes 4-5 |
-| 8 | Security Hardening | Prompt injection defense | Episode 9 |
-| 9 | Secure Identity | Agent identity ≠ user identity | — |
-| 10 | Observability | Tracing, cost tracking | Episode 11 |
-| 11 | Evaluation | Accuracy, faithfulness testing | — |
-| 12 | Deployment Lifecycle | Versioning, rollback, CI/CD | Episode 8 |
-| 13 | Scaling & Cost | Token budgets, model tiering | Episode 13 |
+## When Agents Fail
+
+| Agents are good for... | Agents are NOT good for... |
+|---|---|
+| **High variability** — diverse alert types, many possible root causes | **Deterministic workflows** — output must be exactly reproducible every time |
+| **Cognitive load reduction** — analyzing 10,000 log lines, correlating 50 metrics | **Fully structured input** — if input is already perfect, a rules engine is faster |
+| **Cross-system orchestration** — spanning APIs, databases, knowledge domains | **Zero tolerance for error** — medical dosing, financial settlements, safety-critical |
+| **Human capacity bottlenecks** — 200 alerts per day, 3 on-call engineers | **Simple static automation** — if a bash script solves it, skip the agent |
+
+The sweet spot: problems with repeatable **patterns** but variable **details**.
 
 ---
 
@@ -147,7 +129,7 @@ pip install anthropic
 python3 demos/first_api_call.py
 ```
 
-Send a real Kubernetes alert to Claude with an SRE system prompt. Notice how the system prompt — `"You are a senior SRE with 10 years of Kubernetes experience"` — changes everything about the response. Without it, you get generic advice. With it, you get production-grade remediation steps with specific `kubectl` commands.
+Send a real Kubernetes alert to Claude with an SRE system prompt. Notice how the system prompt — `"You are a senior SRE with 10 years of Kubernetes experience"` — changes everything about the response.
 
 ```python
 import anthropic
@@ -177,33 +159,16 @@ Current Memory Usage: 255Mi (99.6%)"""
 print(message.content[0].text)
 ```
 
-**No API key?** Run it free with Ollama:
+**No API key?** Two free alternatives:
 
+**Ollama (local, free):**
 ```bash
 ollama run llama3.2:3b "You are a senior SRE. A pod named api-server has restarted 15 times. Last log: 'out of memory'. Memory limit 256Mi, usage 255Mi. Give a 3-step fix."
 ```
 
+**Kiro by AWS (free tier):** Open Kiro, paste the same alert, and ask for a remediation plan.
+
 **Checkpoint:** You should see a structured remediation plan mentioning memory limits and OOM. If you get a 401 error → your API key isn't set. If `ModuleNotFoundError` → run `pip install anthropic`.
-
----
-
-## Quick Reference
-
-### MCP vs A2A
-
-| | MCP (Model Context Protocol) | A2A (Agent-to-Agent) |
-|---|---|---|
-| **Connects** | Agents ↔ Tools & Data | Agents ↔ Other Agents |
-| **Analogy** | USB-C port | HTTP between microservices |
-| **When needed** | Single agent using tools | Multi-agent systems |
-
-### Agent Adoption Maturity
-
-| Stage | The Agent... | Human Role | This Series |
-|-------|-------------|------------|-------------|
-| Assist (low risk) | Helps human decide | In the loop on every action | Episodes 1-5 |
-| Automate (medium risk) | Executes within guardrails | Reviews at checkpoints | Episodes 6-10 |
-| Orchestrate (managed risk) | Coordinates across systems | Monitors, not in the middle | Episode 11 |
 
 ---
 
@@ -247,7 +212,7 @@ ollama run llama3.2:3b "You are a senior SRE. A pod named api-server has restart
 
 ## Cost
 
-This entire episode costs **~$0.02** (one Claude Sonnet API call). Ollama demos are free.
+This entire episode costs **~$0.02** (one Claude Sonnet API call). Ollama and Kiro demos are free.
 
 ---
 
