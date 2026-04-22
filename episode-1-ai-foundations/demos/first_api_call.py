@@ -12,7 +12,7 @@ import anthropic
 client = anthropic.Anthropic()
 
 message = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6-latest",
     max_tokens=1024,
     system="You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable.",
     messages=[
