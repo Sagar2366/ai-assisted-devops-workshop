@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""
+Task 4: Where LLMs Break — Hallucination and Limitations
+Expose the fundamental limitations of LLMs by asking things they cannot do.
+AI-Assisted DevOps Workshop | Episode 1 | Sagar Utekar
+
+Prerequisites:
+  export ANTHROPIC_API_KEY="your-key-here"
+  pip install anthropic
+"""
+
+import anthropic
+
+def main():
+    print("=" * 65)
+    print("Task 4: Where LLMs Break — Anthropic Claude")
+    print("=" * 65)
+
+    client = anthropic.Anthropic()
+
+    system = "You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable."
+
+    # TODO 1: Define three questions that expose LLM limitations
+    # Question 1: Ask about LIVE cluster state (model has no access)
+    # Question 2: Ask it to EXECUTE a command (model cannot run things)
+    # Question 3: Ask about a specific flag (model may hallucinate)
+    questions = [
+        ("Live cluster state", ___),  # TODO: Use "Is my api-server pod in the production namespace healthy right now?"
+        ("Execute a command", ___),  # TODO: Use "Run 'kubectl get pods -n production' and show me the output."
+        ("Hallucination trap", ___),  # TODO: Use "What is the exact flag for graceful restart timeout in kubectl rollout restart?"
+    ]
+
+    for label, question in questions:
+        print("=" * 60)
+        print(f"TEST: {label}")
+        print(f"QUESTION: {question}")
+        print("=" * 60)
+
+        # TODO 2: Call the API with each question
+        message = client.messages.create(
+            model="claude-sonnet-4-6-latest",
+            max_tokens=512,
+            system=___,  # TODO: Use system
+            messages=[{"role": "user", "content": ___}]  # TODO: Use question
+        )
+
+        # TODO 3: Print the response
+        print(___)  # TODO: Use message.content[0].text
+        print()
+
+    print("=" * 65)
+    print("Key Learnings:")
+    print("- LLMs cannot access live systems (no cluster, no logs)")
+    print("- LLMs cannot execute commands (can only suggest them)")
+    print("- LLMs hallucinate — make up facts with full confidence")
+    print("- NEVER run AI-generated commands without reading them first")
+    print("- These limitations are why AGENTS exist (Episode 4)")
+    print("=" * 65)
+
+    print("\nTask 4 Complete!")
+    print("\nAll Anthropic labs done! Try the same tasks with OpenAI:")
+    print("  python3 demos/openai/task1_first_api_call.py")
+
+
+if __name__ == "__main__":
+    main()
