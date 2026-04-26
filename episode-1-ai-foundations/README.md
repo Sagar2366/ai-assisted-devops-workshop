@@ -14,10 +14,12 @@ Every concept is taught through code — you run it first, then understand what 
 - System prompts — one line changes everything
 - Persona swap — same K8s alert, 3 different expert analyses
 - Where LLMs break — hallucination, no live access, no action
+- Basic tool use — the model decides to call a function (the core of an agent)
 - Multi-turn conversations — how memory works at the API level
 - Context window management — what happens when conversations get too long
+- Summarization — compress old messages, keep key info
 
-**40 hands-on labs** across 5 frameworks. Each lab has TODO markers (`___`) with hints — fill in the blanks, run the script, see the result.
+**45 hands-on labs** across 5 frameworks. Each lab has TODO markers (`___`) with hints — fill in the blanks, run the script, see the result.
 
 ---
 
@@ -103,7 +105,7 @@ You replace `___` with the correct value, run it, and the LLM triages a K8s pod 
 
 ## Hands-On Labs
 
-### Phase 1: Basics (Tasks 1-4)
+### Phase 1: Basics & Tools (Tasks 1-4b)
 
 | Task | File | What You Learn |
 |------|------|----------------|
@@ -111,12 +113,14 @@ You replace `___` with the correct value, run it, and the LLM triages a K8s pod 
 | 2 | `task2_system_prompts.py` | System prompts — one line turns a generic response into expert advice |
 | 3 | `task3_persona_swap.py` | Same alert, 3 personas — SRE, Security Engineer, Cost Analyst |
 | 4 | `task4_limitations.py` | Hallucination test — ask about fake K8s resources, see what breaks |
+| 4b | `task4b_basic_tool.py` | Basic tool use — the model DECIDES to call a function |
 
 ```bash
 python3 demos/google/task1_first_api_call.py
 python3 demos/google/task2_system_prompts.py
 python3 demos/google/task3_persona_swap.py
 python3 demos/google/task4_limitations.py
+python3 demos/google/task4b_basic_tool.py
 ```
 
 ### Phase 2: Memory & Context (Tasks 5-8)
@@ -155,7 +159,7 @@ Sends the same K8s alert through every configured provider — skips any you hav
 | AWS Bedrock | `demos/bedrock/` | IAM credentials | Paid |
 | MAF (Semantic Kernel) | `demos/maf/` | `OPENAI_API_KEY` | Paid |
 
-Pick one framework. Complete all 8 tasks. Then try a second — same tasks, different SDK. You'll see the pattern is identical.
+Pick one framework. Complete all 9 tasks. Then try a second — same tasks, different SDK. You'll see the pattern is identical.
 
 ---
 
@@ -171,18 +175,19 @@ episode-1-ai-foundations/
 │   │   ├── task2_system_prompts.py
 │   │   ├── task3_persona_swap.py
 │   │   ├── task4_limitations.py
+│   │   ├── task4b_basic_tool.py
 │   │   ├── task5_conversation_history.py
 │   │   ├── task6_context_window.py
 │   │   ├── task7_summarization.py
 │   │   └── task8_personalization.py
 │   ├── anthropic/                     # Anthropic Claude
-│   │   └── task1–task8
+│   │   └── task1–task4b, task5–task8
 │   ├── openai/                        # OpenAI GPT
-│   │   └── task1–task8
+│   │   └── task1–task4b, task5–task8
 │   ├── bedrock/                       # AWS Bedrock
-│   │   └── task1–task8
+│   │   └── task1–task4b, task5–task8
 │   └── maf/                           # Semantic Kernel
-│       └── task1–task8
+│       └── task1–task4b, task5–task8
 └── README.md
 ```
 
@@ -218,13 +223,13 @@ ollama run llama3.2:3b "You are a senior SRE. A pod named api-server has restart
 
 ## Cost
 
-This entire episode costs **$0.00** if you use Google Gemini (free tier). With paid providers: ~$0.25 total for all 8 tasks.
+This entire episode costs **$0.00** if you use Google Gemini (free tier). With paid providers: ~$0.25 total for all 9 tasks.
 
 ---
 
 ## Homework
 
-1. Complete all 8 tasks for at least one provider (Google Gemini recommended — it's free)
+1. Complete all 9 tasks for at least one provider (Google Gemini recommended — it's free)
 2. Pick a second provider and redo tasks 1-4 — compare the SDK patterns
 3. Run `demos/all_providers.py` — see all providers side by side
 4. Try the hallucination test (task 4) with your own DevOps questions

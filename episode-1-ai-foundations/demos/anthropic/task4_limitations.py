@@ -58,8 +58,7 @@ def main():
     print("=" * 65)
 
     print("\nTask 4 Complete!")
-    print("\nAll Anthropic labs done! Try the same tasks with OpenAI:")
-    print("  python3 demos/openai/task1_first_api_call.py")
+    print("Next: python3 demos/anthropic/task4b_basic_tool.py")
 
 
 if __name__ == "__main__":

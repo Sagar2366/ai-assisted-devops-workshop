@@ -84,7 +84,7 @@ def main():
     print("=" * 65)
 
     print("\nTask 4 Complete!")
-    print("Next: python3 demos/openai/task5_conversation_history.py")
+    print("Next: python3 demos/openai/task4b_basic_tool.py")
 
 
 if __name__ == "__main__":

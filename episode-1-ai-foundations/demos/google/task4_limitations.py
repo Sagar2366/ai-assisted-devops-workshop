@@ -92,5 +92,5 @@ KEY LEARNING — Limitations Apply to ALL Providers:
   Bonus:     Gemini is FREE — safe to experiment and learn these boundaries!
 """)
 
-print("Next: task5_conversation_history.py — Give Gemini memory with multi-turn chat")
+print("Next: python3 demos/google/task4b_basic_tool.py")
 print("Task 4 Complete!")
