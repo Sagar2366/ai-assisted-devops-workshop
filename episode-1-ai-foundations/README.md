@@ -8,15 +8,6 @@
 
 Every concept is taught through live coding — I write the code from scratch on camera, you follow along.
 
-- Make your first LLM API call (what ChatGPT does behind the scenes)
-- System prompts — one line turns a generic chatbot into a senior SRE
-- Persona swap — same K8s OOM alert, 3 different expert analyses
-- Where LLMs break — hallucination, no live cluster access, no execution
-- Basic tool use — the model decides to call a function on its own
-- Multi-turn conversations — how memory actually works at the API level
-- Context window management — what happens when conversations overflow
-- Summarization — compress old messages, keep the critical facts
-
 ---
 
 ## 9 Tasks
