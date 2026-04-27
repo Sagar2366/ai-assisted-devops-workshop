@@ -1,4 +1,4 @@
-# Lab 4b: Basic Tool Use — The Core of an Agent
+# Lab 9: Basic Tool Use — The Core of an Agent
 
 > **Mission:** Give the model a tool and watch it DECIDE to use it on its own — this is what separates a chatbot from an agent.
 
@@ -146,7 +146,7 @@ Every provider has different syntax, but the flow is always:
 ## Run It
 
 ```bash
-python3 demos/{your-provider}/task4b_basic_tool.py
+python3 demos/{your-provider}/task9_basic_tool.py
 ```
 
 ---
@@ -165,7 +165,7 @@ You never told it to use the tool. It decided on its own.
 
 ## Key Takeaway
 
-The model DECIDED to use the tool — you never told it to. That decision-making is the core of an agent. In Lab 4 we saw the model can't access live systems — tools fix that. Episode 4 goes deep: multiple tools, error handling, parallel execution.
+The model DECIDED to use the tool — you never told it to. That decision-making is the core of an agent. In Labs 1-4 we saw the model can't access live systems — tools fix that. Episode 4 goes deep: multiple tools, error handling, parallel execution.
 
 ---
 
@@ -175,7 +175,7 @@ If you get stuck, here's the full working script:
 
 ```python
 #!/usr/bin/env python3
-"""Task 4b: Basic Tool Use — Pod Health Checker"""
+"""Task 9: Basic Tool Use — Pod Health Checker"""
 import anthropic
 import json
 
@@ -251,4 +251,4 @@ if __name__ == "__main__":
 
 ---
 
-Next: [Lab 5: Conversation History](lab5-conversation-history.md)
+**Built by [Sagar Utekar](https://github.com/Sagar2366)** | CNCF Ambassador | Kubestronaut

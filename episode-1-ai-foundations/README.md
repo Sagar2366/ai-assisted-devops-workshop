@@ -18,11 +18,11 @@ Every concept is taught through live coding — I write the code from scratch on
 | 2 | System Prompts | Add one line, transform generic output into expert SRE triage |
 | 3 | Persona Swap | Same OOM alert analyzed by SRE, Network Engineer, Security Engineer |
 | 4 | Limitations | Ask about fake kubectl flags — watch the AI hallucinate with confidence |
-| 4b | Tool Use | Define a pod health checker — the model decides when to call it |
 | 5 | Conversation History | Multi-turn K8s troubleshooting — the AI remembers context |
 | 6 | Context Window | When conversations get too long, slide the window |
 | 7 | Summarization | Compress 10 turns into 2 sentences — keep names, tools, constraints |
 | 8 | Personalization | Extract an engineer's profile, tailor every response to their stack |
+| 9 | Tool Use | Define a pod health checker — the model decides when to call it |
 
 All tasks use real SRE scenarios — K8s OOM alerts, pod crash troubleshooting, incident triage. No "hello world."
 
@@ -89,11 +89,11 @@ This entire episode costs **$0.00** with Google Gemini's free tier. With paid pr
   - [Lab 2: System Prompts](labs/lab2-system-prompts.md)
   - [Lab 3: Persona Swap](labs/lab3-persona-swap.md)
   - [Lab 4: Limitations](labs/lab4-limitations.md)
-  - [Lab 4b: Basic Tool Use](labs/lab4b-basic-tool.md)
   - [Lab 5: Conversation History](labs/lab5-conversation-history.md)
   - [Lab 6: Context Window](labs/lab6-context-window.md)
   - [Lab 7: Summarization](labs/lab7-summarization.md)
   - [Lab 8: Personalization](labs/lab8-personalization.md)
+  - [Lab 9: Basic Tool Use](labs/lab9-basic-tool.md)
 - [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) by Anthropic
 <!-- - [Watch on YouTube](https://youtube.com/...) -->
 

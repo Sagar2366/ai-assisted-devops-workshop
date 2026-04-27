@@ -139,4 +139,4 @@ if __name__ == "__main__":
 
 ---
 
-Next: [Lab 4b: Basic Tool Use](lab4b-basic-tool.md)
+Next: [Lab 5: Conversation History](lab5-conversation-history.md)

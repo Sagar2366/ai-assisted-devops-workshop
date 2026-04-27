@@ -117,11 +117,11 @@ Personalization = profile extraction + system prompt injection. The AI stops giv
 | System prompts | 2 | One line turns a chatbot into a senior SRE |
 | Persona swap | 3 | Same input, different system prompt = different expert |
 | Limitations | 4 | LLMs hallucinate, can't access live systems, can't execute |
-| Tool use | 4b | Define tools, model decides when to call them |
 | Memory | 5 | Send full conversation history = short-term memory |
 | Context window | 6 | When history overflows, slide the window |
 | Summarization | 7 | Compress old messages instead of dropping them |
 | Personalization | 8 | Extract profile, tailor every response |
+| Tool use | 9 | Define tools, model decides when to call them |
 
 ### The Agent Formula
 
@@ -136,6 +136,10 @@ Personalization = profile extraction + system prompt injection. The AI stops giv
 ```
 
 You just built all the pieces. In Episode 4, you connect them into a real agent.
+
+---
+
+Next: [Lab 9: Basic Tool Use](lab9-basic-tool.md)
 
 ---
 
