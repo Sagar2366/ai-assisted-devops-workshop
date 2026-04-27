@@ -112,4 +112,82 @@ Context windows overflow. Sliding window is the simplest fix — but you lose ol
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 6: Context Window Management"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+    system = "You are a helpful SRE assistant. Remember details from the conversation."
+
+    # Build 10-turn SRE conversation
+    topics = [
+        "My name is Sagar, I'm an SRE at Acme Corp.",
+        "We run EKS with 50 microservices.",
+        "Our budget is $500/month for AI tools.",
+        "The payment-service pod keeps OOMing.",
+        "Memory limit is 256Mi, usage peaks at 255Mi.",
+        "We use ArgoCD for deployments.",
+        "Prometheus and Grafana for monitoring.",
+        "Team of 5 SREs covering 3 time zones.",
+        "Biggest pain point is OOM after every deploy.",
+        "We need a cost-effective solution."
+    ]
+
+    conversation = []
+    for topic in topics:
+        conversation.append({"role": "user", "content": topic})
+        response = client.messages.create(
+            model="claude-sonnet-4-6-latest", max_tokens=128,
+            system=system, messages=conversation
+        )
+        conversation.append({"role": "assistant", "content": response.content[0].text})
+
+    # Test 1: Full history
+    test_msg = "Based on everything you know about me, what's your recommendation?"
+    conversation.append({"role": "user", "content": test_msg})
+    response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=system, messages=conversation
+    )
+    print("FULL HISTORY:", response.content[0].text)
+    conversation.append({"role": "assistant", "content": response.content[0].text})
+
+    # Test 2: Sliding window — last 3 exchanges only
+    truncated = conversation[-6:]
+    truncated.append({"role": "user", "content": test_msg})
+    response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=system, messages=truncated
+    )
+    print("\nTRUNCATED:", response.content[0].text)
+
+    # Token budget estimation
+    def estimate_tokens(text):
+        return len(text) // 4
+
+    messages_text = [m["content"] for m in conversation if m["role"] == "user"]
+    token_budget = 500
+    messages_in_budget = 0
+    tokens_used = 0
+    for msg in reversed(messages_text):
+        msg_tokens = estimate_tokens(msg)
+        if tokens_used + msg_tokens <= token_budget:
+            messages_in_budget += 1
+            tokens_used += msg_tokens
+        else:
+            break
+    print(f"\nWith {token_budget} token budget: can keep last {messages_in_budget} messages")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 7: Summarization](lab7-summarization.md)

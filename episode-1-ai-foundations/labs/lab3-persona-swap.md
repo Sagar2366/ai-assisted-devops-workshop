@@ -91,4 +91,51 @@ The system prompt isn't decoration — it fundamentally changes what the model f
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 3: Persona Swap — Same Alert, Different Experts"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+
+    alert = """Analyze this alert and give me a 3-step remediation plan:
+
+ALERT: PodCrashLooping
+Namespace: production
+Pod: api-server-7d4f8b6c5-x2k9m
+Restarts: 15 in last 30 minutes
+Last Log: "fatal error: runtime: out of memory"
+Current Memory Limit: 256Mi
+Current Memory Usage: 255Mi (99.6%)"""
+
+    personas = [
+        ("SRE Engineer", "You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable."),
+        ("Network Engineer", "You are a senior network engineer. Focus on connectivity, DNS, and network-level issues. Be concise."),
+        ("Security Engineer", "You are a senior security engineer. Focus on security implications, access controls, and compliance. Be concise."),
+    ]
+
+    for name, system_prompt in personas:
+        print(f"\n{'='*60}")
+        print(f"  PERSONA: {name}")
+        print(f"{'='*60}")
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6-latest",
+            max_tokens=512,
+            system=system_prompt,
+            messages=[{"role": "user", "content": alert}]
+        )
+        print(message.content[0].text)
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 4: Limitations](lab4-limitations.md)

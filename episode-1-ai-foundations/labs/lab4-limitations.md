@@ -101,4 +101,42 @@ LLMs answer from training data, not live systems. They can't access your cluster
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 4: Where LLMs Break — Hallucination and Limitations"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+    system = "You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable."
+
+    questions = [
+        ("Live cluster state", "Is my api-server pod in the production namespace healthy right now?"),
+        ("Execute a command", "Run 'kubectl get pods -n production' and show me the output."),
+        ("Hallucination trap", "What is the exact flag for graceful restart timeout in kubectl rollout restart?"),
+    ]
+
+    for label, question in questions:
+        print(f"\n{'='*60}")
+        print(f"  TEST: {label}")
+        print(f"{'='*60}")
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6-latest",
+            max_tokens=512,
+            system=system,
+            messages=[{"role": "user", "content": question}]
+        )
+        print(message.content[0].text)
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 4b: Basic Tool Use](lab4b-basic-tool.md)

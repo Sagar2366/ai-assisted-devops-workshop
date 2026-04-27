@@ -148,4 +148,109 @@ You just built all the pieces. In Episode 4, you connect them into a real agent.
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 8: Personalized Context — SRE Profile Extraction"""
+import anthropic
+import json
+import re
+
+def main():
+    client = anthropic.Anthropic()
+    system = "You are a helpful DevOps assistant that provides personalized recommendations."
+
+    # Build conversation with SRE details
+    conversation = []
+    conversation_log = []
+    user_messages = [
+        "Hi, I'm Sagar, an SRE at Acme Corp",
+        "We run EKS with about 50 microservices in production",
+        "We use ArgoCD for deployments and Prometheus for monitoring",
+        "Our team is 5 SREs covering 3 time zones",
+        "Biggest pain point is OOM kills on payment-service after every deploy. Budget is $500/month for AI tools."
+    ]
+
+    for msg in user_messages:
+        conversation.append({"role": "user", "content": msg})
+        r = client.messages.create(
+            model="claude-sonnet-4-6-latest", max_tokens=256,
+            system=system, messages=conversation
+        )
+        reply = r.content[0].text
+        conversation.append({"role": "assistant", "content": reply})
+        conversation_log.append({"user": msg, "assistant": reply})
+
+    # Extract SRE profile
+    conv_text = ""
+    for ex in conversation_log:
+        conv_text += f"User: {ex['user']}\nAssistant: {ex['assistant']}\n\n"
+
+    extraction_prompt = f"""Extract a user profile from this conversation as JSON.
+Include: name, role, company, cloud_provider, tools, team_size, pain_points, budget.
+
+Conversation:
+{conv_text}
+
+Return ONLY a JSON object:
+{{"name": "...", "role": "...", "company": "...", "cloud_provider": "...", "tools": [...], "team_size": "...", "pain_points": [...], "budget": "..."}}"""
+
+    profile_response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=256,
+        messages=[{"role": "user", "content": extraction_prompt}]
+    )
+    profile_json = profile_response.content[0].text
+
+    try:
+        json_match = re.search(r'\{[^}]+\}', profile_json, re.DOTALL)
+        if json_match:
+            profile_json = json_match.group(0)
+        user_profile = json.loads(profile_json)
+    except:
+        user_profile = {"name": "Sagar", "role": "SRE", "company": "Acme Corp",
+                       "cloud_provider": "EKS", "tools": ["ArgoCD", "Prometheus"],
+                       "team_size": "5", "pain_points": ["OOM kills"], "budget": "$500/month"}
+
+    print(f"Profile: {json.dumps(user_profile, indent=2)}")
+
+    # Compare generic vs personalized
+    test_query = "How should I handle a failed deployment?"
+
+    # Generic
+    print("\nGeneric (no context):")
+    r = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=system,
+        messages=[{"role": "user", "content": test_query}]
+    )
+    print(r.content[0].text[:200])
+
+    # Personalized
+    personalized_system = f"""{system}
+
+You are talking to {user_profile.get('name', 'the user')}, {user_profile.get('role', 'an engineer')} at {user_profile.get('company', 'their company')}.
+Cloud: {user_profile.get('cloud_provider', 'unknown')}.
+Tools: {', '.join(user_profile.get('tools', []))}.
+Team: {user_profile.get('team_size', 'unknown')} engineers.
+Pain points: {', '.join(user_profile.get('pain_points', []))}.
+Budget: {user_profile.get('budget', 'unknown')}.
+Tailor all responses to their specific stack, tools, and constraints."""
+
+    print("\nPersonalized (with profile):")
+    r = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=personalized_system,
+        messages=[{"role": "user", "content": test_query}]
+    )
+    print(r.content[0].text[:200])
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 **Built by [Sagar Utekar](https://github.com/Sagar2366)** | CNCF Ambassador | Kubestronaut

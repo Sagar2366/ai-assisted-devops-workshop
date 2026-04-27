@@ -110,4 +110,102 @@ Summarization > truncation. Compress old messages instead of dropping them. This
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 7: Conversation Summarization"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+    system = "You are a senior SRE assistant that remembers conversation details."
+
+    # Build 10-turn SRE conversation
+    topics = [
+        "My name is Sagar and I'm an SRE at Acme Corp",
+        "We run EKS with 50 microservices in production",
+        "I'm looking into AI tools for incident response",
+        "The payment-service pod keeps OOMing after deploys",
+        "Memory limit is 256Mi but usage peaks at 255Mi",
+        "We use ArgoCD for deployments and Prometheus for monitoring",
+        "Our budget for AI tooling is $500 per month",
+        "Team of 5 SREs covering 3 time zones",
+        "We need automated triage to reduce MTTR",
+        "Biggest pain point is getting paged at 3 AM for the same OOM issue"
+    ]
+
+    conversation = []
+    conversation_log = []
+    for topic in topics:
+        conversation.append({"role": "user", "content": topic})
+        response = client.messages.create(
+            model="claude-sonnet-4-6-latest", max_tokens=256,
+            system=system, messages=conversation
+        )
+        reply = response.content[0].text
+        conversation.append({"role": "assistant", "content": reply})
+        conversation_log.append({"user": topic, "assistant": reply})
+
+    # Split: old (first 7) vs recent (last 3)
+    old_exchanges = conversation_log[:7]
+    recent_exchanges = conversation_log[7:]
+
+    # Summarize old exchanges
+    old_text = ""
+    for ex in old_exchanges:
+        old_text += f"User: {ex['user']}\nAssistant: {ex['assistant']}\n\n"
+
+    summary_prompt = f"""Summarize this conversation in 2-3 sentences.
+Preserve: names, tools/platforms mentioned, specific problems, constraints (budget, team size), and any decisions made.
+
+Conversation:
+{old_text}
+
+Create a concise summary:"""
+
+    summary_response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=256,
+        messages=[{"role": "user", "content": summary_prompt}]
+    )
+    summary_text = summary_response.content[0].text
+    print(f"Summary: {summary_text}")
+
+    # Inject summary into system prompt
+    summary_system = f"""{system}
+
+Here is context from a previous conversation:
+{summary_text}
+
+Use this context to personalize your responses."""
+
+    # Test with summary
+    new_conversation = []
+    for ex in recent_exchanges:
+        new_conversation.append({"role": "user", "content": ex["user"]})
+        r = client.messages.create(
+            model="claude-sonnet-4-6-latest", max_tokens=256,
+            system=summary_system, messages=new_conversation
+        )
+        new_conversation.append({"role": "assistant", "content": r.content[0].text})
+
+    test_questions = ["What's my name and company?", "What tools do we use for deployments?", "What's our monthly budget?"]
+    print("\nWith Summary:")
+    for q in test_questions:
+        new_conversation.append({"role": "user", "content": q})
+        r = client.messages.create(
+            model="claude-sonnet-4-6-latest", max_tokens=128,
+            system=summary_system, messages=new_conversation
+        )
+        new_conversation.append({"role": "assistant", "content": r.content[0].text})
+        print(f"  Q: {q} -> A: {r.content[0].text[:80]}")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 8: Personalization](lab8-personalization.md)

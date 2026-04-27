@@ -169,4 +169,86 @@ The model DECIDED to use the tool — you never told it to. That decision-making
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 4b: Basic Tool Use — Pod Health Checker"""
+import anthropic
+import json
+
+POD_STATUS_DB = {
+    "monitoring": """NAME                          READY   STATUS             RESTARTS   AGE
+prometheus-server-0            1/1     Running            0          7d
+grafana-6b8c4d9f-n3k8p        1/1     Running            0          7d
+alertmanager-0                 0/1     CrashLoopBackOff   5          2d
+node-exporter-x4m9v            1/1     Running            0          7d"""
+}
+
+def main():
+    client = anthropic.Anthropic()
+
+    tools = [
+        {
+            "name": "check_pod_status",
+            "description": "Check the status of Kubernetes pods in a namespace.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "namespace": {
+                        "type": "string",
+                        "description": "Kubernetes namespace to check"
+                    }
+                },
+                "required": ["namespace"]
+            }
+        }
+    ]
+
+    def execute_tool(namespace):
+        print(f"\n  [TOOL CALLED] check_pod_status(namespace={namespace})")
+        result = POD_STATUS_DB.get(namespace, f"No pods in '{namespace}'")
+        print(f"  [TOOL RESULT]\n{result}\n")
+        return result
+
+    query = "Are my pods healthy in the monitoring namespace?"
+    print(f"Query: {query}")
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6-latest",
+        max_tokens=1024,
+        system="You are an SRE assistant. Use check_pod_status to inspect pods. Flag anything not Running.",
+        tools=tools,
+        messages=[{"role": "user", "content": query}]
+    )
+
+    if response.stop_reason == "tool_use":
+        for block in response.content:
+            if block.type == "tool_use":
+                result = execute_tool(**block.input)
+
+                final = client.messages.create(
+                    model="claude-sonnet-4-6-latest",
+                    max_tokens=1024,
+                    tools=tools,
+                    messages=[
+                        {"role": "user", "content": query},
+                        {"role": "assistant", "content": response.content},
+                        {"role": "user", "content": [
+                            {"type": "tool_result", "tool_use_id": block.id, "content": str(result)}
+                        ]}
+                    ]
+                )
+                print(f"Agent: {final.content[0].text}")
+    else:
+        print(f"Agent: {response.content[0].text}")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 5: Conversation History](lab5-conversation-history.md)

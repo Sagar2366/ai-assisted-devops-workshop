@@ -125,4 +125,51 @@ The system prompt is the most powerful lever you have. One line transforms a gen
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 2: System Prompts — One Line Changes Everything"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+
+    alert = """Analyze this alert and give me a 3-step remediation plan:
+
+ALERT: PodCrashLooping
+Namespace: production
+Pod: api-server-7d4f8b6c5-x2k9m
+Restarts: 15 in last 30 minutes
+Last Log: "fatal error: runtime: out of memory"
+Current Memory Limit: 256Mi
+Current Memory Usage: 255Mi (99.6%)"""
+
+    # Without system prompt
+    print("WITHOUT system prompt:")
+    message = client.messages.create(
+        model="claude-sonnet-4-6-latest",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": alert}]
+    )
+    print(message.content[0].text)
+
+    # With system prompt
+    print("\nWITH system prompt:")
+    message = client.messages.create(
+        model="claude-sonnet-4-6-latest",
+        max_tokens=1024,
+        system="You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable.",
+        messages=[{"role": "user", "content": alert}]
+    )
+    print(message.content[0].text)
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 3: Persona Swap](lab3-persona-swap.md)

@@ -164,4 +164,46 @@ An LLM API call = send a prompt (tokens in), get a response (tokens out). That i
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 1: Your First API Call — Anthropic Claude"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+
+    # Experiment 1: Basic API call
+    message = client.messages.create(
+        model="claude-sonnet-4-6-latest",
+        max_tokens=1024,
+        messages=[
+            {"role": "user", "content": "What is Kubernetes and why do DevOps engineers use it?"}
+        ]
+    )
+    print(message.content[0].text)
+
+    # Experiment 2: Different question
+    message2 = client.messages.create(
+        model="claude-sonnet-4-6-latest",
+        max_tokens=1024,
+        messages=[
+            {"role": "user", "content": "Explain Prometheus in 3 sentences"}
+        ]
+    )
+    print(message2.content[0].text)
+
+    # Experiment 3: Token usage
+    print(f"Input tokens:  {message2.usage.input_tokens}")
+    print(f"Output tokens: {message2.usage.output_tokens}")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 2: System Prompts](lab2-system-prompts.md)

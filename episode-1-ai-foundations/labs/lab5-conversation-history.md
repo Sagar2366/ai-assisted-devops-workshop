@@ -141,4 +141,62 @@ Memory at the API level is manual — you send the full conversation every time.
 
 ---
 
+## Complete Code (Anthropic)
+
+If you get stuck, here's the full working script:
+
+```python
+#!/usr/bin/env python3
+"""Task 5: Conversation History — Multi-Turn K8s Troubleshooting"""
+import anthropic
+
+def main():
+    client = anthropic.Anthropic()
+    system = "You are a senior SRE assistant. Remember details from the conversation."
+    conversation = []
+
+    # Turn 1: Describe the problem
+    message_1 = "I'm seeing OOM kills on my api-server pod in production. Memory limit is 256Mi, usage hits 255Mi."
+    conversation.append({"role": "user", "content": message_1})
+    response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=system, messages=conversation
+    )
+    assistant_reply = response.content[0].text
+    conversation.append({"role": "assistant", "content": assistant_reply})
+    print(f"User: {message_1}")
+    print(f"Agent: {assistant_reply}")
+
+    # Turn 2: Ask about logs
+    message_2 = "What should I look for in the logs to find the root cause?"
+    conversation.append({"role": "user", "content": message_2})
+    response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=system, messages=conversation
+    )
+    assistant_reply = response.content[0].text
+    conversation.append({"role": "assistant", "content": assistant_reply})
+    print(f"\nUser: {message_2}")
+    print(f"Agent: {assistant_reply}")
+
+    # Turn 3: Ask for the fix
+    message_3 = "Give me the kubectl commands to fix this."
+    conversation.append({"role": "user", "content": message_3})
+    response = client.messages.create(
+        model="claude-sonnet-4-6-latest", max_tokens=512,
+        system=system, messages=conversation
+    )
+    assistant_reply = response.content[0].text
+    conversation.append({"role": "assistant", "content": assistant_reply})
+    print(f"\nUser: {message_3}")
+    print(f"Agent: {assistant_reply}")
+
+    print(f"\nTotal messages in history: {len(conversation)}")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
 Next: [Lab 6: Context Window Management](lab6-context-window.md)
