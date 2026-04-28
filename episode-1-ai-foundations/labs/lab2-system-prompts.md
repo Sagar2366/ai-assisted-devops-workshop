@@ -126,6 +126,7 @@ The system prompt is the most powerful lever you have. One line transforms a gen
 ---
 
 ## Complete Code (Anthropic)
+Without system, Claude has no instructions on who to be or how to respond. It defaults to its general helpful-assistant mode — which is why you get the generic blog-post answer.
 
 If you get stuck, here's the full working script:
 
