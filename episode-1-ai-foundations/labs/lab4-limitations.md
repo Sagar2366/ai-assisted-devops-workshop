@@ -1,6 +1,6 @@
 # Lab 4: Where LLMs Break — Limitations
 
-> **Mission:** Expose three fundamental LLM limitations — no live access, no execution, and hallucination.
+> **Mission:** Expose three fundamental LLM limitations — no live access, no execution, and hallucination (sometimes).
 
 ---
 
