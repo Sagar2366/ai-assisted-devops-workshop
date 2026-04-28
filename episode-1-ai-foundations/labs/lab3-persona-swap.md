@@ -1,36 +1,31 @@
 # Lab 3: Persona Swap — Same Alert, Different Experts
 
-This lab demonstrates how **system prompting** fundamentally shifts the lens through which an AI model analyzes a production incident. By fanning out a single alert to three distinct personas, you can generate a multi-dimensional triage report automatically.
+> **Mission:** Send the same production incident to three different AI personas and compare how each expert analyzes it.
 
 ---
 
-## Mission
-Send the same production incident to three different AI personas and compare how each expert analyzes the root cause and suggests remediation.
+## The Concept
+
+Same alert. Three different system prompts. Three completely different analyses.
+
+- **SRE Engineer** — deploy rollback, pod health, resource limits, rollout strategy
+- **Network Engineer** — connection refused, DNS resolution, network policies, TLS/mTLS
+- **Security Engineer** — service account permissions, mTLS misconfiguration, network policy rules, audit trail
+
+### Why this works: "Attention Weighting"
+The system prompt isn't just a tone shift; it acts as a **functional filter**. By assigning a persona, you force the model to prioritize specific "attention weights" in its training data to turning a generic assistant into a specialized domain expert. This creates a **multi-angle triage report** where each expert looks for different root-cause candidates in the same data.
 
 ---
 
-## The Concept: Why Parallel Personas?
+## What You'll Build
 
-In traditional automation, a script follows a single logical path. In LLM-based triage, the model follows a **Linguistic Lens**. Without a persona, an LLM provides a generic summary; with a persona, it mimics a **Cross-Functional War Room**.
-
-### 1. Fighting "Blind Spot" Bias
-During a P0 incident, an SRE might only look at the latest CI/CD pipeline, while the real issue is a latent mTLS certificate expiry. By fanning out the alert to three "experts" in parallel, you ensure that the "Network" and "Security" angles are investigated even if the on-call engineer is purely "DevOps" focused.
-
-### 2. Pattern Matching vs. Log Analysis
-The LLM isn't "logged into your cluster." It is performing high-speed pattern matching against millions of historical post-mortems:
-* **SRE Lens:** Matches symptoms to **Deployment Patterns** (Canary failures, OOMKills).
-* **Network Lens:** Matches symptoms to **Infrastructure Patterns** (Egress rules, DNS TTLs).
-* **Security Lens:** Matches symptoms to **Policy Patterns** (RBAC, IAM, NetworkPolicies).
-
-### 3. The "Intersection of Truth"
-The value of this lab isn't just the three separate answers—it's where they **overlap**. If the SRE persona flags "Deploy #1042" and the Network persona flags "Connection Refused," your most likely culprit is a **Service or Ingress configuration change** within that specific deployment.
+Loop through three personas, send the same production incident to each, and print all three responses side by side to simulate a cross-functional war room.
 
 ---
 
-## Step-by-Step Implementation
+## Step 1: Define the Multi-Dimensional Alert
 
-### 1. Define the Multi-Dimensional Alert
-The incident is designed to be ambiguous. Is it a bad code push? A DNS failure? A blocked port?
+This alert is deliberately ambiguous—a 503 spike with a failed external gateway call after a deploy. Each expert will find something different in it.
 
 ```python
 alert = """Analyze this incident and give me a 3-step remediation plan:
@@ -48,46 +43,79 @@ Last Log: "connection refused: upstream payment-gateway.internal:8443"
 """
 ```
 
-### 2. Configure the Expert Personas
-Define the system prompts that will guide the model's focus.
+---
+
+## Step 2: Define the Personas
 
 ```python
 personas = [
     (
         "SRE Engineer",
-        "You are a senior SRE. Focus on deploy health, rollout strategy, and reliability. Provide kubectl commands."
+        "You are a senior SRE with 10 years of Kubernetes experience. Focus on deploy health, rollout strategy, resource limits, and service reliability. Give kubectl commands."
     ),
     (
         "Network Engineer",
-        "You are a senior network engineer. Focus on connectivity, DNS, and TLS issues causing 'connection refused'."
+        "You are a senior network engineer. Focus on connectivity, DNS resolution, network policies, port access, and TLS/mTLS issues."
     ),
     (
         "Security Engineer",
-        "You are a senior security engineer. Focus on permissions, mTLS, and NetworkPolicy changes in the deploy."
+        "You are a senior security engineer. Focus on service account permissions, mTLS misconfiguration, and network policy rule changes."
     ),
 ]
 ```
 
 ---
 
-## Complete Implementation (Python)
+## Step 3: Loop Through Each Persona
+
+Send the same alert with each persona's system prompt.
+
+```python
+for title, system_prompt in personas:
+    print(f"\n{'='*60}")
+    print(f"  {title}")
+    print(f"{'='*60}")
+
+    message = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=1024,
+        system=system_prompt,
+        messages=[{"role": "user", "content": alert}]
+    )
+    print(message.content[0].text)
+```
+
+---
+
+## What Success Looks Like
+
+* **SRE Engineer:** Looks at deploy #1042 — suggests `rollout undo`, checks pod readiness probes, and reviews resource limits.
+* **Network Engineer:** Focuses on `connection refused` on port 8443 — checks DNS resolution of `payment-gateway.internal` and inspects egress network policies.
+* **Security Engineer:** Asks what deploy #1042 changed in terms of IAM — checks if `ServiceAccount` permissions were modified or if mTLS is failing.
+
+**Same incident — completely different analysis from each expert.**
+
+---
+
+## Key Takeaway
+
+The system prompt isn't decoration — it fundamentally changes what the model focuses on. In production, you can swap personas for **multi-angle incident analysis**: one alert, three expert opinions. This prevents "tunnel vision" by ensuring that the "Security" and "Network" blind spots are automatically covered by the AI during a high-pressure triage.
+
+---
+
+## Complete Code (Anthropic)
 
 ```python
 #!/usr/bin/env python3
-import os
-import sys
+"""Task 3: Persona Swap — Same Alert, Different Experts"""
 import anthropic
+import os
 
 def main():
-    # 1. Environment Safety Check
-    if "ANTHROPIC_API_KEY" not in os.environ:
-        print("❌ Error: ANTHROPIC_API_KEY environment variable not set.")
-        sys.exit(1)
-
     client = anthropic.Anthropic()
 
-    # 2. The Multi-Dimensional Alert (The "Input")
     alert = """Analyze this incident and give me a 3-step remediation plan:
+
 ALERT: ServiceUnavailable
 Namespace: production
 Service: payment-api
@@ -100,24 +128,12 @@ Symptoms:
 Last Log: "connection refused: upstream payment-gateway.internal:8443"
 """
 
-    # 3. Define the Expert Personas (The "Lenses")
     personas = [
-        (
-            "SRE Engineer",
-            "You are a senior SRE. Focus on deploy health, rollout strategy, and reliability. Provide kubectl commands."
-        ),
-        (
-            "Network Engineer",
-            "You are a senior network engineer. Focus on connectivity, DNS, and TLS issues causing 'connection refused'."
-        ),
-        (
-            "Security Engineer",
-            "You are a senior security engineer. Focus on permissions, mTLS, and NetworkPolicy changes in the deploy."
-        ),
+        ("SRE Engineer", "You are a senior SRE. Focus on deploy health, rollout strategy, and reliability. Be concise."),
+        ("Network Engineer", "You are a senior network engineer. Focus on connectivity, DNS, and TLS issues. Be concise."),
+        ("Security Engineer", "You are a senior security engineer. Focus on permissions, mTLS, and network security. Be concise."),
     ]
 
-    # 4. The Fan-Out Loop
-    # We send the same alert to each persona to get a 360-degree triage report.
     for name, system_prompt in personas:
         print(f"\n{'='*60}")
         print(f"  PERSONA: {name}")
@@ -137,16 +153,4 @@ if __name__ == "__main__":
 
 ---
 
-## What Success Looks Like
-
-| Expert | Primary Focus | Likely Recommendation |
-| :--- | :--- | :--- |
-| **SRE** | Deploy #1042 | `kubectl rollout undo` to restore service immediately. |
-| **Network** | `internal:8443` | Check CoreDNS logs and test egress to the gateway. |
-| **Security** | Auth/Policy | Verify if the new deploy changed the `ServiceAccount` or `NetworkPolicy`. |
-
-## Key Takeaway
-System prompts are not just "flavor"—they are **functional filters**. In a real-world DevOps pipeline, fanning out alerts to multiple personas ensures that the "blind spots" of one engineering discipline are covered by another before a human even starts triaging.
-
----
-**Next:** [Lab 4: Limitations](lab4-limitations.md)
+Next: [Lab 4: Limitations](lab4-limitations.md)
