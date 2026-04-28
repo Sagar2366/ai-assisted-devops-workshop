@@ -183,7 +183,7 @@ This is the actual API call. You send a prompt, the model returns a response.
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=[
         {"role": "user", "content": "What is Kubernetes and why do DevOps engineers use it?"}
@@ -275,7 +275,7 @@ def main():
 
     # Experiment 1: Basic API call
     message = client.messages.create(
-        model="claude-sonnet-4-6-latest",
+        model="claude-opus-4-7",
         max_tokens=1024,
         messages=[
             {"role": "user", "content": "What is Kubernetes and why do DevOps engineers use it?"}
@@ -285,7 +285,7 @@ def main():
 
     # Experiment 2: Different question
     message2 = client.messages.create(
-        model="claude-sonnet-4-6-latest",
+        model="claude-opus-4-7",
         max_tokens=1024,
         messages=[
             {"role": "user", "content": "Explain Prometheus in 3 sentences"}

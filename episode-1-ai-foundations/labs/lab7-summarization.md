@@ -50,7 +50,7 @@ for msg in conversation:
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=256,
     messages=[{"role": "user", "content": summary_prompt}]
 )
@@ -78,7 +78,7 @@ Use this context to personalize your responses."""
 
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     system=system_prompt,
     messages=[{"role": "user", "content": "What's the most cost-effective way to fix my problem?"}]
@@ -142,7 +142,7 @@ def main():
     for topic in topics:
         conversation.append({"role": "user", "content": topic})
         response = client.messages.create(
-            model="claude-sonnet-4-6-latest", max_tokens=256,
+            model="claude-opus-4-7", max_tokens=256,
             system=system, messages=conversation
         )
         reply = response.content[0].text
@@ -167,7 +167,7 @@ Conversation:
 Create a concise summary:"""
 
     summary_response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=256,
+        model="claude-opus-4-7", max_tokens=256,
         messages=[{"role": "user", "content": summary_prompt}]
     )
     summary_text = summary_response.content[0].text
@@ -186,7 +186,7 @@ Use this context to personalize your responses."""
     for ex in recent_exchanges:
         new_conversation.append({"role": "user", "content": ex["user"]})
         r = client.messages.create(
-            model="claude-sonnet-4-6-latest", max_tokens=256,
+            model="claude-opus-4-7", max_tokens=256,
             system=summary_system, messages=new_conversation
         )
         new_conversation.append({"role": "assistant", "content": r.content[0].text})
@@ -196,7 +196,7 @@ Use this context to personalize your responses."""
     for q in test_questions:
         new_conversation.append({"role": "user", "content": q})
         r = client.messages.create(
-            model="claude-sonnet-4-6-latest", max_tokens=128,
+            model="claude-opus-4-7", max_tokens=128,
             system=summary_system, messages=new_conversation
         )
         new_conversation.append({"role": "assistant", "content": r.content[0].text})

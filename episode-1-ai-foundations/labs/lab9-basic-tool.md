@@ -94,7 +94,7 @@ tools = [
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     tools=tools,
     messages=[{"role": "user", "content": "Are my pods healthy in the monitoring namespace?"}]
@@ -116,7 +116,7 @@ result = check_pod_status(**tool_block.input)
 
 # Send the result back to the model
 followup = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     tools=tools,
     messages=[
@@ -217,7 +217,7 @@ def main():
     print(f"Query: {query}")
 
     response = client.messages.create(
-        model="claude-sonnet-4-6-latest",
+        model="claude-opus-4-7",
         max_tokens=1024,
         system="You are an SRE assistant. Use check_pod_status to inspect pods. Flag anything not Running.",
         tools=tools,
@@ -230,7 +230,7 @@ def main():
                 result = execute_tool(**block.input)
 
                 final = client.messages.create(
-                    model="claude-sonnet-4-6-latest",
+                    model="claude-opus-4-7",
                     max_tokens=1024,
                     tools=tools,
                     messages=[

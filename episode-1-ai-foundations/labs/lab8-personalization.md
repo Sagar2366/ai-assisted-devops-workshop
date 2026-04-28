@@ -46,7 +46,7 @@ User: Biggest pain point is OOM kills on payment-service after every deploy."""
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=512,
     messages=[{"role": "user", "content": extraction_prompt}]
 )
@@ -60,7 +60,7 @@ print("PROFILE:", profile)
 
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=[{"role": "user", "content": "How should I handle a failed deployment?"}]
 )
@@ -77,7 +77,7 @@ system_prompt = f"""You are a DevOps assistant. User profile:
 Tailor all responses to this user's specific stack, tools, and constraints."""
 
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     system=system_prompt,
     messages=[{"role": "user", "content": "How should I handle a failed deployment?"}]
@@ -181,7 +181,7 @@ def main():
     for msg in user_messages:
         conversation.append({"role": "user", "content": msg})
         r = client.messages.create(
-            model="claude-sonnet-4-6-latest", max_tokens=256,
+            model="claude-opus-4-7", max_tokens=256,
             system=system, messages=conversation
         )
         reply = r.content[0].text
@@ -203,7 +203,7 @@ Return ONLY a JSON object:
 {{"name": "...", "role": "...", "company": "...", "cloud_provider": "...", "tools": [...], "team_size": "...", "pain_points": [...], "budget": "..."}}"""
 
     profile_response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=256,
+        model="claude-opus-4-7", max_tokens=256,
         messages=[{"role": "user", "content": extraction_prompt}]
     )
     profile_json = profile_response.content[0].text
@@ -226,7 +226,7 @@ Return ONLY a JSON object:
     # Generic
     print("\nGeneric (no context):")
     r = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=system,
         messages=[{"role": "user", "content": test_query}]
     )
@@ -245,7 +245,7 @@ Tailor all responses to their specific stack, tools, and constraints."""
 
     print("\nPersonalized (with profile):")
     r = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=personalized_system,
         messages=[{"role": "user", "content": test_query}]
     )

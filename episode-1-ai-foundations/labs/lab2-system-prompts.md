@@ -61,7 +61,7 @@ Same as Lab 1 — just send the alert as a user message.
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=[{"role": "user", "content": alert}]
 )
@@ -78,7 +78,7 @@ Now add one parameter — the system prompt. This is the only change.
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     system="You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable. Give kubectl commands, not general advice.",
     messages=[{"role": "user", "content": alert}]
@@ -151,7 +151,7 @@ Current Memory Usage: 255Mi (99.6%)"""
     # Without system prompt
     print("WITHOUT system prompt:")
     message = client.messages.create(
-        model="claude-sonnet-4-6-latest",
+        model="claude-opus-4-7",
         max_tokens=1024,
         messages=[{"role": "user", "content": alert}]
     )
@@ -160,7 +160,7 @@ Current Memory Usage: 255Mi (99.6%)"""
     # With system prompt
     print("\nWITH system prompt:")
     message = client.messages.create(
-        model="claude-sonnet-4-6-latest",
+        model="claude-opus-4-7",
         max_tokens=1024,
         system="You are a senior SRE with 10 years of Kubernetes experience. Be concise and actionable.",
         messages=[{"role": "user", "content": alert}]

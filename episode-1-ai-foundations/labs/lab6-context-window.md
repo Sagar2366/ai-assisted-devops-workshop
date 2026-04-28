@@ -65,7 +65,7 @@ conversation.append({
 
 # Send full conversation — AI knows name, company, budget, problem
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=conversation
 )
@@ -81,7 +81,7 @@ WINDOW_SIZE = 4  # Keep only last 4 messages
 truncated = conversation[-WINDOW_SIZE:]
 
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=truncated
 )
@@ -143,7 +143,7 @@ def main():
     for topic in topics:
         conversation.append({"role": "user", "content": topic})
         response = client.messages.create(
-            model="claude-sonnet-4-6-latest", max_tokens=128,
+            model="claude-opus-4-7", max_tokens=128,
             system=system, messages=conversation
         )
         conversation.append({"role": "assistant", "content": response.content[0].text})
@@ -152,7 +152,7 @@ def main():
     test_msg = "Based on everything you know about me, what's your recommendation?"
     conversation.append({"role": "user", "content": test_msg})
     response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=system, messages=conversation
     )
     print("FULL HISTORY:", response.content[0].text)
@@ -162,7 +162,7 @@ def main():
     truncated = conversation[-6:]
     truncated.append({"role": "user", "content": test_msg})
     response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=system, messages=truncated
     )
     print("\nTRUNCATED:", response.content[0].text)

@@ -57,7 +57,7 @@ for title, question in questions:
     print(f"{'='*60}")
 
     message = client.messages.create(
-        model="claude-sonnet-4-6-latest",
+        model="claude-opus-4-7",
         max_tokens=1024,
         messages=[{"role": "user", "content": question}]
     )
@@ -126,7 +126,7 @@ def main():
         print(f"{'='*60}")
 
         message = client.messages.create(
-            model="claude-sonnet-4-6-latest",
+            model="claude-opus-4-7",
             max_tokens=512,
             system=system,
             messages=[{"role": "user", "content": question}]

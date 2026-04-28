@@ -68,7 +68,7 @@ conversation.append({
 **Anthropic:**
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=conversation
 )
@@ -91,7 +91,7 @@ conversation.append({
 })
 
 message = client.messages.create(
-    model="claude-sonnet-4-6-latest",
+    model="claude-opus-4-7",
     max_tokens=1024,
     messages=conversation
 )
@@ -159,7 +159,7 @@ def main():
     message_1 = "I'm seeing OOM kills on my api-server pod in production. Memory limit is 256Mi, usage hits 255Mi."
     conversation.append({"role": "user", "content": message_1})
     response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=system, messages=conversation
     )
     assistant_reply = response.content[0].text
@@ -171,7 +171,7 @@ def main():
     message_2 = "What should I look for in the logs to find the root cause?"
     conversation.append({"role": "user", "content": message_2})
     response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=system, messages=conversation
     )
     assistant_reply = response.content[0].text
@@ -183,7 +183,7 @@ def main():
     message_3 = "Give me the kubectl commands to fix this."
     conversation.append({"role": "user", "content": message_3})
     response = client.messages.create(
-        model="claude-sonnet-4-6-latest", max_tokens=512,
+        model="claude-opus-4-7", max_tokens=512,
         system=system, messages=conversation
     )
     assistant_reply = response.content[0].text
