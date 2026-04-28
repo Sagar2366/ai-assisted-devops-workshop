@@ -5,29 +5,126 @@
 ---
 
 ## The Concept
+## GenAI — what is this whole thing?
 
-You open ChatGPT, type a question, get an answer. But what is actually happening?
+GenAI is AI that **creates** new stuff — text, code, answers — instead of just labelling things. It's a new category of software that can write back to you.
 
-An **LLM** (Large Language Model) is the AI brain behind ChatGPT, Claude, Gemini. Your input is a **prompt**. The model reads it as **tokens** — roughly one token per word.
+> **Analogy:** Old AI: "Is this email spam? Yes/No." GenAI: "Write a reply to this email."
+
+---
+
+## LLM — the engine behind GenAI
+
+An LLM (Large Language Model) is a program that has read almost everything ever written — books, docs, code, the internet — and learned how language works from all of it.
+
+> **Analogy:** Imagine a student who read every textbook, every Stack Overflow answer, every Kubernetes doc — and can now answer any question from memory. That student is the LLM.
+
+---
+
+## Training — when the model went to school
+
+Training is a one-time process where the company (Anthropic, OpenAI) feeds the model trillions of words and teaches it patterns. Thousands of GPUs. Weeks. Millions of dollars. Once done, the knowledge lives inside the model forever.
+
+> **Analogy:** You studying for 12 years. You don't re-read every book before answering someone — you just know. Training already happened. You're not doing it.
+
+---
+
+## Inference — when you actually use the model
+
+Inference is when you send a question and the model answers from its trained knowledge. One API call. Milliseconds. Fractions of a cent. This is your job — not training.
+
+> **Analogy:** Your friend studied medicine for 7 years (training). You call them and ask "what's this rash?" — they answer instantly (inference). They don't re-read med school textbooks for each call.
+
+---
+
+## Tokens — the unit the model actually reads
+
+The model doesn't read words — it reads chunks called tokens. Roughly 1 token per word. `OOMKilled` might be 3 tokens. Everything you send and receive is counted in tokens. You pay per token.
+
+The **context window** is the max number of tokens that fit in one call (e.g. Claude = 200K). When the conversation gets too long, the oldest tokens fall off.
+
+> **Analogy:** Like how a book is made of words, the model sees a book made of tokens. The context window is the max page count it can hold at once — when the book gets too long, old pages fall off.
+
+---
+
+## Prompt — everything you send to the model
+
+A prompt has 3 layers:
+
+1. **System prompt** — who the model is and how to behave
+2. **Conversation history** — all past turns, which you manually include every call
+3. **User message** — your actual question right now
+
+The model has **zero memory** between calls — you carry the history yourself.
+
+> **Analogy:** Like sending a letter with: a cover page ("You are a senior doctor"), all previous letters stapled behind it, and your new question on top. Every single letter must have the full stack — the doctor forgets everything the moment you leave the room.
+
+---
+
+## Prompt engineering — getting better answers by asking better
+
+Same model, totally different output based on how you write the prompt. Add role, context, constraint, and output format. Vague in = vague out. Specific in = specific out.
+
+| Vague prompt | Specific prompt |
+|---|---|
+| "Fix my car" | "My 2019 Honda Civic makes a grinding noise at 60 kmph on left turns — what's the exact issue and fix?" |
+| Generic blog-post answer | Targeted diagnosis for your exact situation |
+
+> **Analogy:** Same mechanic, completely different quality of answer — depending on how well you described the problem.
+
+---
+
+## Models — different sizes, different trade-offs
+
+The same company ships multiple models. You pick based on the task complexity and cost budget. Same API call, different model string.
+
+| Model tier | Speed | Cost | Use case |
+|---|---|---|---|
+| Opus / frontier | Slow | High | Complex reasoning, architecture decisions |
+| Sonnet / mid | Balanced | Medium | Daily SRE tasks — good default |
+| Haiku / small | Fast | Low | Simple classification, quick lookups |
+
+> **Analogy:** Like doctors — a GP handles most things fast and cheap. A specialist is slower, costs more, but handles complex cases. You don't send every headache to a neurosurgeon.
+
+---
+
+## Billing — you pay per token, input + output
+
+Both directions are billed separately. Bigger models cost more per token. Most SRE tasks cost fractions of a cent per call.
 
 ```
-"The pod is OOMKilled"
-
-  The | pod | is | OOM | Kill | ed
-   1     2    3    4      5     6  = 6 tokens
+Total cost = (input tokens × input rate) + (output tokens × output rate)
 ```
 
-You pay per token. The model has a max capacity called the **context window** — how many tokens fit in one request.
+Cost levers:
+- Shorter prompts = fewer input tokens
+- Right-sized model for the task = lower rate
+- Avoid sending full log files as context every call
 
-When you send a prompt and get a response — that is **inference** (your part). The millions of dollars spent teaching the model — that is **training** (their part).
+> **Analogy:** Like a phone call billed by the word — you pay for what you said AND what they said back. Rambling 10,000-word prompts = expensive calls.
 
+---
+
+## Hallucination — when the model confidently makes stuff up
+
+The model's job is to produce the most likely next token — not to check if it's true. So sometimes it invents a command, flag, or fact with full confidence. It doesn't know it's wrong. You have to catch it.
+
+```bash
+# Example: this flag does not exist
+kubectl rollout restart --graceful-period=30
+# The model said it with full confidence. Always verify before running in prod.
 ```
-  TRAINING (their part)         INFERENCE (your part)
 
-  Weeks on GPU clusters         Milliseconds per call
-  Costs millions                Costs fractions of a cent
-  You DON'T do this             You DO this
-```
+> **Analogy:** Your brilliant friend who studied everything — but when they don't know something, instead of saying "I don't know", they confidently make up a plausible-sounding answer. The danger is they sound equally confident when they're right AND when they're wrong.
+
+**Rule: never run an AI-generated command in production without reading it first.**
+
+---
+
+## The whole story in one paragraph
+
+GenAI uses an LLM — trained once on everything — that you use via inference. You send a prompt (measured in tokens), billed per token, shaped by prompt engineering, through a model sized to your needs. It answers from memory. Sometimes that memory is wrong — that's hallucination. Verify before you run anything.
+
 
 ---
 
