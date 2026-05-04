@@ -1,0 +1,17 @@
+services:
+  sre-analyzer:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_BASE_URL=http://model-runner.docker.internal/engines/v1
+      - MODEL_NAME=ai/llama3.2
+    depends_on:
+      llama:
+        condition: service_started
+
+  llama:
+    provider:
+      type: model
+      options:
+        model: ai/llama3.2

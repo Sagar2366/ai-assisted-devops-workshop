@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SRE Vision Monitor — Docker Model Runner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 20px; }
+        h1 { color: #00d4aa; margin-bottom: 5px; }
+        .subtitle { color: #888; margin-bottom: 20px; font-size: 14px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .panel { background: #16213e; border-radius: 8px; padding: 20px; border: 1px solid #0f3460; }
+        video, canvas { width: 100%; border-radius: 4px; background: #000; }
+        canvas { display: none; }
+        .controls { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-start { background: #00d4aa; color: #1a1a2e; }
+        .btn-stop { background: #e94560; color: white; }
+        .btn-once { background: #0f3460; color: #e0e0e0; border: 1px solid #00d4aa; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #analysis { background: #0f3460; padding: 15px; border-radius: 4px; min-height: 200px; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5; overflow-y: auto; max-height: 400px; }
+        .status { font-size: 12px; color: #888; margin-top: 10px; }
+        .status.active { color: #00d4aa; }
+        .status.error { color: #e94560; }
+        .config { margin-bottom: 15px; }
+        .config label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+        .config input, .config select { width: 100%; padding: 6px 10px; background: #0f3460; border: 1px solid #1a3a5c; border-radius: 4px; color: #e0e0e0; font-size: 13px; }
+        .prompt-input { margin: 10px 0; }
+        .prompt-input textarea { width: 100%; padding: 8px; background: #0f3460; border: 1px solid #1a3a5c; border-radius: 4px; color: #e0e0e0; font-size: 13px; resize: vertical; min-height: 60px; }
+    </style>
+</head>
+<body>
+    <h1>SRE Vision Monitor</h1>
+    <p class="subtitle">Docker Model Runner + Vision Model — real-time image analysis from your webcam</p>
+
+    <div class="container">
+        <div class="panel">
+            <h3>Camera Feed</h3>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+
+            <div class="config">
+                <label>Model</label>
+                <select id="model">
+                    <option value="ai/smolvlm:500M-Q8_0">ai/smolvlm:500M-Q8_0 (fast, 500M)</option>
+                    <option value="ai/llava:7b">ai/llava:7b (accurate, 7B)</option>
+                </select>
+            </div>
+
+            <div class="config">
+                <label>Docker Model Runner Endpoint</label>
+                <input id="endpoint" type="text" value="http://localhost:12434/engines/v1">
+            </div>
+
+            <div class="config">
+                <label>Interval (ms)</label>
+                <input id="interval" type="number" value="3000" min="500" max="30000">
+            </div>
+
+            <div class="prompt-input">
+                <label>Prompt (what to analyze)</label>
+                <textarea id="prompt">You are an SRE monitoring a server room camera. Describe what you see. If you notice any issues (cable mess, warning lights, overheating indicators, unauthorized access), flag them with severity.</textarea>
+            </div>
+
+            <div class="controls">
+                <button class="btn-start" id="startBtn" onclick="startAnalysis()">Start Monitoring</button>
+                <button class="btn-stop" id="stopBtn" onclick="stopAnalysis()" disabled>Stop</button>
+                <button class="btn-once" id="onceBtn" onclick="analyzeOnce()">Analyze Once</button>
+            </div>
+
+            <div id="status" class="status">Ready. Grant camera access to begin.</div>
+        </div>
+
+        <div class="panel">
+            <h3>AI Analysis</h3>
+            <div id="analysis">Waiting for camera feed...
+
+Start monitoring to send frames to the vision model.
+The model will describe what it sees through your camera.</div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const analysisDiv = document.getElementById('analysis');
+        const statusDiv = document.getElementById('status');
+        let intervalId = null;
+        let analyzing = false;
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                video.srcObject = stream;
+                setStatus('Camera active. Ready to analyze.', 'active');
+            } catch (err) {
+                setStatus('Camera access denied: ' + err.message, 'error');
+            }
+        }
+
+        function captureFrame() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+        }
+
+        async function analyzeFrame() {
+            if (analyzing) return;
+            analyzing = true;
+
+            const endpoint = document.getElementById('endpoint').value;
+            const model = document.getElementById('model').value;
+            const prompt = document.getElementById('prompt').value;
+            const imageB64 = captureFrame();
+
+            setStatus('Sending frame to ' + model + '...', 'active');
+
+            try {
+                const response = await fetch(endpoint + '/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: prompt },
+                                { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + imageB64 } }
+                            ]
+                        }],
+                        max_tokens: 200,
+                        temperature: 0.1
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.text();
+                    throw new Error(response.status + ': ' + err);
+                }
+
+                const data = await response.json();
+                const text = data.choices[0].message.content;
+                const timestamp = new Date().toLocaleTimeString();
+                analysisDiv.textContent = '[' + timestamp + '] Model: ' + model + '\n\n' + text;
+                setStatus('Analysis complete. Next frame in ' + document.getElementById('interval').value + 'ms', 'active');
+            } catch (err) {
+                analysisDiv.textContent = 'ERROR: ' + err.message + '\n\nTroubleshooting:\n- Is Docker Model Runner enabled?\n- Is TCP enabled on port 12434?\n- Did you pull the vision model?\n  docker model pull ai/smolvlm:500M-Q8_0';
+                setStatus('Error: ' + err.message, 'error');
+            }
+            analyzing = false;
+        }
+
+        function startAnalysis() {
+            const ms = parseInt(document.getElementById('interval').value);
+            analyzeFrame();
+            intervalId = setInterval(analyzeFrame, ms);
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            setStatus('Monitoring active — analyzing every ' + ms + 'ms', 'active');
+        }
+
+        function stopAnalysis() {
+            clearInterval(intervalId);
+            intervalId = null;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            setStatus('Monitoring stopped.', '');
+        }
+
+        function analyzeOnce() {
+            analyzeFrame();
+        }
+
+        function setStatus(text, type) {
+            statusDiv.textContent = text;
+            statusDiv.className = 'status ' + (type || '');
+        }
+
+        initCamera();
+    </script>
+</body>
+</html>

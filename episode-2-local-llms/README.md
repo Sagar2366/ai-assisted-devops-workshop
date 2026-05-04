@@ -145,6 +145,8 @@ python3 demos/ollama/task9_vision.py
 
 # Section 5: Docker Model Runner (Bonus)
 python3 demos/ollama/task10_docker_model_runner.py
+cd demos/docker-model-runner && docker compose up --build  # SRE Log Analyzer
+cd demos/docker-model-runner && docker compose -f compose-webui.yaml up  # Open WebUI
 ```
 
 ---
@@ -155,19 +157,26 @@ python3 demos/ollama/task10_docker_model_runner.py
 episode-2-local-llms/
 ├── README.md
 ├── demos/
-│   └── ollama/
-│       ├── verify_ollama.py            # Setup: environment check
-│       ├── task1_first_sre_query.py    # S1: Local LLM + K8s log analysis
-│       ├── task2_cli_explorer.py       # S1: CLI commands (Docker analogy)
-│       ├── task3_model_parameters.py   # S1: Model metadata + SRE guide
-│       ├── task4_model_comparison.py   # S1: Side-by-side model benchmark
-│       ├── task5_ollama_api.py         # S2: /api/generate, /api/chat, streaming, JSON
-│       ├── task6_openai_compat.py      # S2: OpenAI SDK → local Ollama
-│       ├── task7_custom_modelfile.py   # S3: Build a custom SRE model
-│       ├── task8_open_webui.py         # S3: Launch Open Web UI via Docker
-│       ├── task9_vision.py            # S4: Vision model image analysis
-│       ├── task10_docker_model_runner.py # S5: Docker Model Runner + OpenAI SDK
-│       └── Modelfile.sre-assistant     # S3: Custom model definition
+│   ├── ollama/
+│   │   ├── verify_ollama.py            # Setup: environment check
+│   │   ├── task1_first_sre_query.py    # S1: Local LLM + K8s log analysis
+│   │   ├── task2_cli_explorer.py       # S1: CLI commands (Docker analogy)
+│   │   ├── task3_model_parameters.py   # S1: Model metadata + SRE guide
+│   │   ├── task4_model_comparison.py   # S1: Side-by-side model benchmark
+│   │   ├── task5_ollama_api.py         # S2: /api/generate, /api/chat, streaming, JSON
+│   │   ├── task6_openai_compat.py      # S2: OpenAI SDK → local Ollama
+│   │   ├── task7_custom_modelfile.py   # S3: Build a custom SRE model
+│   │   ├── task8_open_webui.py         # S3: Launch Open Web UI via Docker
+│   │   ├── task9_vision.py            # S4: Vision model image analysis
+│   │   ├── task10_docker_model_runner.py # S5: Docker Model Runner + OpenAI SDK
+│   │   └── Modelfile.sre-assistant     # S3: Custom model definition
+│   └── docker-model-runner/
+│       ├── app.py                      # S5: SRE Log Analyzer FastAPI service
+│       ├── Dockerfile                  # S5: Container build
+│       ├── compose.yaml                # S5: SRE Analyzer + Model Runner
+│       ├── compose-webui.yaml          # S5: Open WebUI + Model Runner
+│       ├── vision-monitor.html         # S5: Real-time webcam vision analysis
+│       └── requirements.txt            # S5: Python dependencies
 └── labs/
     ├── lab0-setup.md                   # Setup
     ├── lab1-first-sre-query.md         # Section 1

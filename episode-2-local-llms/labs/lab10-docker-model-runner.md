@@ -94,11 +94,10 @@ They coexist. In fact, Docker Model Runner's API is also Ollama-compatible — t
 
 ## What You'll Build
 
-A Python script that:
-1. Verifies Docker Model Runner is enabled
-2. Pulls a model via Docker CLI
-3. Runs inference via the OpenAI-compatible gateway on port 12434
-4. Demonstrates the Ollama → Docker Model Runner swap (same code, different `base_url`)
+1. **Docker Model Runner basics** — enable, pull, chat, API calls (Steps 1-7)
+2. **SRE Log Analyzer** — a containerized FastAPI service that analyzes K8s logs using Docker Model Runner as its AI backend, run entirely with `docker compose up` (Step 8)
+3. **Open WebUI + Docker Model Runner** — same ChatGPT-like interface from Lab 8, now backed by Docker Model Runner instead of Ollama (Step 9)
+4. **Vision Monitor** — real-time webcam analysis using a local vision model, single HTML file talks to Docker Model Runner (Step 10)
 
 ---
 
@@ -112,6 +111,14 @@ docker model pull ai/llama3.2
 docker model run ai/llama3.2 "You are an SRE. What causes OOMKilled in Kubernetes?"
 docker model list
 python3 demos/ollama/task10_docker_model_runner.py
+
+# SRE Log Analyzer (Step 8)
+cd demos/docker-model-runner && docker compose up --build
+# Then: curl http://localhost:8000/analyze/oomkilled
+
+# Vision Monitor (Step 10)
+docker model pull ai/smolvlm:500M-Q8_0
+open demos/docker-model-runner/vision-monitor.html
 ```
 
 ---
@@ -324,9 +331,290 @@ python3 demos/ollama/task10_docker_model_runner.py
 
 ---
 
+## Step 8: Build an SRE Log Analyzer with Docker Compose
+
+This is the payoff — build a real containerized service that uses Docker Model Runner as its AI backend. One `docker compose up`, your SRE assistant is live.
+
+### What you're building
+
+A FastAPI service with three endpoints:
+
+| Endpoint | What it does |
+|----------|-------------|
+| `GET /health` | Health check — shows model name and backend URL |
+| `GET /samples` | Lists built-in sample K8s failure scenarios |
+| `GET /analyze/{sample}` | Analyzes a built-in sample (oomkilled, crashloop, imagepull) |
+| `POST /analyze` | Analyzes any logs you send |
+
+The service runs in a container and talks to Docker Model Runner via `model-runner.docker.internal` — no TCP port exposure needed. The model is declared as a Compose provider, so `docker compose up` handles everything.
+
+### Create the app
+
+Create a folder `demos/docker-model-runner/` with four files:
+
+**`app.py`** — the FastAPI service:
+
+```python
+"""SRE Log Analyzer — Docker Model Runner Demo"""
+import os
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from openai import OpenAI
+
+app = FastAPI(title="SRE Log Analyzer", version="1.0.0")
+
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://model-runner.docker.internal/engines/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "ai/llama3.2")
+
+client = OpenAI(base_url=LLM_BASE_URL, api_key="not-needed")
+
+SYSTEM_PROMPT = """You are a senior SRE assistant. When given Kubernetes logs or alerts:
+1. Identify the root cause
+2. Assess severity (critical/warning/info)
+3. Give 2-3 actionable kubectl commands to investigate or fix
+Be concise. No fluff."""
+
+SAMPLE_LOGS = {
+    "oomkilled": """Pod payment-service-7f8b9c6d4-x2k9p OOMKilled
+Container memory limit: 256Mi
+Peak usage before kill: 254Mi
+Restart count: 4
+Last restart: 2 minutes ago""",
+
+    "crashloop": """Pod api-gateway-5d9f8b7c6-k3m2n CrashLoopBackOff
+Exit code: 1
+Back-off restarting failed container
+Events:
+  Warning  BackOff  2m (x5 over 8m)  kubelet  Back-off restarting failed container""",
+
+    "imagepull": """Pod frontend-8b7c6d5f4-j2k1m ImagePullBackOff
+Failed to pull image "registry.internal/frontend:v2.3.1"
+Error: unauthorized: authentication required
+Events:
+  Warning  Failed  1m (x3 over 5m)  kubelet  Failed to pull image""",
+}
+
+
+class AnalyzeRequest(BaseModel):
+    logs: str
+
+
+class AnalyzeResponse(BaseModel):
+    analysis: str
+    model: str
+    backend: str
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy", "model": MODEL_NAME, "backend": LLM_BASE_URL}
+
+
+@app.get("/samples")
+def samples():
+    return {"available_samples": list(SAMPLE_LOGS.keys())}
+
+
+@app.get("/analyze/{sample_name}")
+def analyze_sample(sample_name: str):
+    if sample_name not in SAMPLE_LOGS:
+        raise HTTPException(status_code=404, detail=f"Sample not found. Available: {list(SAMPLE_LOGS.keys())}")
+    return _analyze(SAMPLE_LOGS[sample_name])
+
+
+@app.post("/analyze", response_model=AnalyzeResponse)
+def analyze_logs(req: AnalyzeRequest):
+    return _analyze(req.logs)
+
+
+def _analyze(logs: str) -> dict:
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Analyze these Kubernetes logs:\n\n{logs}"},
+        ],
+        temperature=0.1,
+    )
+    return {
+        "analysis": response.choices[0].message.content,
+        "model": MODEL_NAME,
+        "backend": LLM_BASE_URL,
+    }
+```
+
+**`Dockerfile`**:
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py .
+EXPOSE 8000
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**`requirements.txt`**:
+
+```
+fastapi==0.115.0
+uvicorn==0.30.6
+openai==1.50.0
+pydantic==2.9.0
+```
+
+**`compose.yaml`** — this is where the magic happens:
+
+```yaml
+services:
+  sre-analyzer:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_BASE_URL=http://model-runner.docker.internal/engines/v1
+      - MODEL_NAME=ai/llama3.2
+    depends_on:
+      llama:
+        condition: service_started
+
+  llama:
+    provider:
+      type: model
+      options:
+        model: ai/llama3.2
+```
+
+Notice what's happening:
+- The `llama` service uses `provider: { type: model }` — this is Docker Compose's native Model Runner integration
+- `depends_on` ensures the model is ready before the app starts
+- The app talks to `model-runner.docker.internal` — the internal DNS name, no port mapping needed
+- `docker compose up` pulls the model AND builds/starts the app
+
+### Run it
+
+```bash
+cd demos/docker-model-runner
+
+# Start everything
+docker compose up --build
+```
+
+Docker pulls the model (if not cached), builds the app container, and starts the service. Wait for `Uvicorn running on http://0.0.0.0:8000`.
+
+### Test it
+
+Open a new terminal:
+
+```bash
+# Health check
+curl http://localhost:8000/health
+# {"status":"healthy","model":"ai/llama3.2","backend":"http://model-runner.docker.internal/engines/v1"}
+
+# List available samples
+curl http://localhost:8000/samples
+# {"available_samples":["oomkilled","crashloop","imagepull"]}
+
+# Analyze the OOMKilled scenario
+curl http://localhost:8000/analyze/oomkilled
+
+# Analyze the CrashLoopBackOff scenario
+curl http://localhost:8000/analyze/crashloop
+
+# Analyze the ImagePullBackOff scenario
+curl http://localhost:8000/analyze/imagepull
+
+# Send your own logs
+curl -X POST http://localhost:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"logs": "Pod redis-master-0 evicted due to node pressure. Node memory: 95% used."}'
+```
+
+Each response includes the AI analysis, the model name, and which backend was used.
+
+### What to watch for on camera
+
+1. `docker compose up` pulls the model and starts the app in one command
+2. The app talks to `model-runner.docker.internal` — no port 12434 needed from inside containers
+3. The `provider: type: model` block — models as first-class Compose services
+4. Compare the response quality across the three sample scenarios
+
+### Tear down
+
+```bash
+docker compose down
+```
+
+---
+
+## Step 9: Open WebUI with Docker Model Runner
+
+In Lab 8, you ran Open WebUI with Ollama. Same tool, same ChatGPT-like interface — now backed by Docker Model Runner instead.
+
+### The compose file
+
+```yaml
+# compose-webui.yaml
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "3000:8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://model-runner.docker.internal/engines/v1
+      - OPENAI_API_KEY=not-needed
+      - OLLAMA_BASE_URL=
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+      llama:
+        condition: service_started
+    restart: unless-stopped
+
+  llama:
+    provider:
+      type: model
+      options:
+        model: ai/llama3.2
+
+volumes:
+  open-webui-data:
+```
+
+Key differences from Lab 8's Ollama setup:
+- `OPENAI_API_BASE_URL` points to Model Runner's gateway instead of Ollama
+- `OLLAMA_BASE_URL` is empty — tells Open WebUI not to look for Ollama
+- The `llama` service uses the native `provider` block — model is managed by Compose
+
+### Run it
+
+```bash
+cd demos/docker-model-runner
+
+# Start Open WebUI + Docker Model Runner
+docker compose -f compose-webui.yaml up
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser. Create an account (local only, no data leaves your machine), select `ai/llama3.2` as the model, and start chatting.
+
+### What to show on camera
+
+1. Open WebUI is identical to the Lab 8 experience — same UI, different backend
+2. Swap between Ollama (Lab 8) and Docker Model Runner (this step) by changing one env var
+3. The `provider` block makes `docker compose up` handle the model automatically
+
+### Tear down
+
+```bash
+docker compose -f compose-webui.yaml down -v
+```
+
+---
+
 ## What Success Looks Like
 
-Docker Model Runner responds to your SRE query through the OpenAI SDK — same quality as Ollama, running entirely within Docker Desktop. The three-way swap demonstrates that your code is truly portable across all local backends.
+Docker Model Runner responds to your SRE query through the OpenAI SDK — same quality as Ollama, running entirely within Docker Desktop. The SRE Log Analyzer shows a complete Compose-based app using Model Runner as the AI backend. Open WebUI proves the same ChatGPT-like interface works with both Ollama and Docker Model Runner — one env var swap.
 
 ---
 
@@ -344,6 +632,100 @@ Docker Model Runner responds to your SRE query through the OpenAI SDK — same q
 | Works from container but not host | Host-side TCP disabled | The gateway works from containers by default; for host access you must enable TCP (Step 1) |
 | WSL2 integration issues (Windows) | Beta bug with Docker Model Runner in WSL2 | Use PowerShell instead of WSL terminal; or wait for fix in upcoming Docker Desktop release |
 | GPU not detected (Windows) | "Enable GPU backed inference" not checked | Settings → Model Runner → check all three boxes (enable, TCP, GPU) |
+
+---
+
+## Step 10: Vision Model — Real-Time Camera Analysis
+
+Docker Model Runner supports multimodal (vision) models. In this step you'll run a local vision model that analyzes your webcam feed in real-time — think "AI security camera for your server room" but running entirely on your laptop.
+
+### Pull the vision model
+
+```bash
+docker model pull ai/smolvlm:500M-Q8_0
+```
+
+SmolVLM is a 500M parameter vision-language model. Small enough to run fast on any machine, capable enough to describe images and flag anomalies.
+
+### The demo app
+
+Open `demos/docker-model-runner/vision-monitor.html` in your browser:
+
+```bash
+# macOS
+open demos/docker-model-runner/vision-monitor.html
+
+# Linux
+xdg-open demos/docker-model-runner/vision-monitor.html
+
+# Or just double-click the file
+```
+
+Grant camera access when prompted.
+
+### How it works
+
+The app captures a JPEG frame from your webcam and sends it to Docker Model Runner's vision endpoint:
+
+```python
+response = client.chat.completions.create(
+    model="ai/smolvlm:500M-Q8_0",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "You are an SRE monitoring a server room. Describe what you see. Flag any issues."},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}}
+        ]
+    }],
+    max_tokens=200
+)
+```
+
+Same OpenAI vision API format — `image_url` with base64 data. Works identically to OpenAI's GPT-4 Vision, just running locally.
+
+### What to do
+
+1. Click **"Analyze Once"** — sends a single frame, gets a description
+2. Click **"Start Monitoring"** — sends frames every 3 seconds (configurable)
+3. Try different prompts:
+   - `"Describe what you see in one sentence"`
+   - `"Is there a person in this image? Yes or no."`
+   - `"List all objects visible. Format as a bullet list."`
+4. Try pointing your camera at:
+   - Your screen showing a Grafana dashboard
+   - A terminal with error logs
+   - Server rack or networking equipment
+   - A whiteboard with architecture diagrams
+
+### Configuration options
+
+| Setting | Default | What it controls |
+|---------|---------|-----------------|
+| Model | `ai/smolvlm:500M-Q8_0` | Vision model to use |
+| Endpoint | `http://localhost:12434/engines/v1` | Docker Model Runner gateway |
+| Interval | 3000ms | Time between analysis frames |
+| Prompt | SRE server room monitoring | What the model looks for |
+
+### Why this matters for SRE
+
+Real-world applications of local vision + SRE:
+- **Dashboard screenshot analysis** — feed Grafana screenshots to the model, get natural-language summaries
+- **Physical infrastructure monitoring** — server room cameras analyzed locally (no data leaves the building)
+- **Alert triage** — paste screenshots of alert dashboards, get AI-powered context
+- **Documentation** — point camera at whiteboard diagrams, get them converted to text
+
+### Limitations of 500M vision models
+
+SmolVLM at 500M is fast but imprecise. It will:
+- Describe general scene content
+- Identify obvious objects (people, screens, text)
+- Miss fine details (small text on screens, specific error messages)
+
+For production quality, use `ai/llava:7b` (pull it with `docker model pull ai/llava:7b`) — slower but significantly more accurate.
+
+### Tear down
+
+Just close the browser tab. No containers to stop — the HTML talks directly to Docker Model Runner's API.
 
 ---
 
