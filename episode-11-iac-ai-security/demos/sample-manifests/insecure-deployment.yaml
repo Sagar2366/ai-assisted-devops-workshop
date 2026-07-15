@@ -1,0 +1,83 @@
+# Intentionally insecure Kubernetes deployment for security scanning demos
+# DO NOT deploy this to any real cluster
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insecure-app
+  labels:
+    app: insecure-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: insecure-app
+  template:
+    metadata:
+      labels:
+        app: insecure-app
+    spec:
+      hostNetwork: true
+      hostPID: true
+      serviceAccountName: app-sa
+      containers:
+      - name: main
+        image: mycompany/webapp:latest
+        ports:
+        - containerPort: 8080
+          hostPort: 8080
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        env:
+        - name: DATABASE_PASSWORD
+          value: "super-secret-password-123"
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIAIOSFODNN7EXAMPLE"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+        - name: host-root
+          mountPath: /host
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+      - name: host-root
+        hostPath:
+          path: /
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insecure-app-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: insecure-app
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: insecure-app-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: insecure-app-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: insecure-app-role
+subjects:
+- kind: ServiceAccount
+  name: app-sa
+  namespace: default

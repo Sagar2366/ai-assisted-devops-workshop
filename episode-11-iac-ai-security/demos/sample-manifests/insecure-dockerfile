@@ -1,0 +1,46 @@
+# Intentionally insecure Dockerfile for security scanning demos
+# DO NOT use this in production
+
+FROM python:latest
+
+# Install unnecessary packages expanding attack surface
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    wget \
+    netcat-openbsd \
+    nmap \
+    vim \
+    ssh \
+    telnet \
+    gcc \
+    make \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Hardcoded secrets - CRITICAL vulnerability
+ENV DATABASE_URL="postgresql://admin:password123@prod-db.internal:5432/appdb"
+ENV AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+ENV AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+ENV STRIPE_SECRET_KEY="sk_live_EXAMPLE_DO_NOT_USE_replace_me"
+ENV JWT_SECRET="mysupersecretjwtsigningkey2024"
+
+# Copy everything including potential secrets
+COPY . /app
+
+# No .dockerignore - copies .git, .env, node_modules, etc.
+WORKDIR /app
+
+# Install Python dependencies as root
+RUN pip install -r requirements.txt
+
+# Download and execute remote script (supply chain risk)
+RUN curl -sSL https://example.com/setup.sh | bash
+
+# Expose multiple ports unnecessarily
+EXPOSE 8080 22 3306 5432 6379
+
+# No HEALTHCHECK defined
+
+# No USER instruction - runs as root by default
+CMD ["python", "app.py"]

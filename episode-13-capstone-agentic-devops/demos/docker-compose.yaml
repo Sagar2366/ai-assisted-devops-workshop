@@ -1,0 +1,80 @@
+# =============================================================================
+# Agentic DevOps Platform — Docker Compose
+# Local development and demo environment
+# AI-Assisted DevOps Workshop | Episode 13 | Sagar Utekar
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Platform: The main agentic DevOps application
+  # ---------------------------------------------------------------------------
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentic-devops-platform
+    ports:
+      - "8000:8000"
+    environment:
+      - DEVOPS_PLATFORM_LLM_PROVIDER=anthropic
+      - DEVOPS_PLATFORM_LLM_MODEL_NAME=claude-sonnet-4-20250514
+      - DEVOPS_PLATFORM_LLM_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DEVOPS_PLATFORM_API_PORT=8000
+      - DEVOPS_PLATFORM_LOG_LEVEL=INFO
+      - DEVOPS_PLATFORM_LOG_FORMAT=json
+      - DEVOPS_PLATFORM_SAFETY_ENABLED=true
+    volumes:
+      - audit-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - platform-network
+
+  # ---------------------------------------------------------------------------
+  # Prometheus: Metrics collection (optional monitoring)
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: agentic-devops-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - platform-network
+    profiles:
+      - monitoring
+
+# ---------------------------------------------------------------------------
+# Volumes
+# ---------------------------------------------------------------------------
+volumes:
+  audit-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+networks:
+  platform-network:
+    driver: bridge
