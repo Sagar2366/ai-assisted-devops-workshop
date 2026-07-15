@@ -1,0 +1,161 @@
+# Project: [PROJECT_NAME]
+
+> Production CLAUDE.md template for DevOps/Infrastructure repositories.
+> Customize each section for your specific environment.
+
+## Architecture Overview
+
+- **Cloud Provider:** [AWS/GCP/Azure] ([primary-region], [dr-region])
+- **Orchestration:** [EKS/GKE/AKS] [version] with [autoscaler]
+- **Infrastructure as Code:** [Terraform/Pulumi/CDK] [version]
+- **CI/CD Pipeline:** [GitHub Actions/GitLab CI/Jenkins] → [ArgoCD/Flux] → [Cluster]
+- **Observability:** [Prometheus/Datadog] + [Grafana] + [Loki/Splunk]
+- **Service Mesh:** [Istio/Linkerd/None]
+- **Secrets Management:** [Vault/AWS SM/GCP SM] + [External Secrets Operator]
+
+## Environments
+
+| Environment | Cluster/Account     | Region        | Namespace Pattern    | Access Level |
+|-------------|---------------------|---------------|----------------------|--------------|
+| dev         | [cluster-dev]       | [region]      | {service}-dev        | All engineers |
+| staging     | [cluster-staging]   | [region]      | {service}-staging    | All engineers |
+| production  | [cluster-prod]      | [region]      | {service}-prod       | SRE + leads  |
+| dr          | [cluster-dr]        | [dr-region]   | {service}-dr         | SRE only     |
+
+## Critical Safety Rules
+
+These rules are NON-NEGOTIABLE. Claude Code must NEVER violate them:
+
+- NEVER run `terraform destroy` or `terraform apply -auto-approve` in production
+- NEVER execute `kubectl delete namespace` in any environment
+- NEVER commit secrets, tokens, or credentials to version control
+- NEVER modify production resources without a plan file and explicit approval
+- NEVER bypass GitOps — all production changes go through [ArgoCD/Flux]
+- NEVER scale production to zero without incident commander approval
+- ALWAYS use `--dry-run=client` before any mutating kubectl command in prod
+- ALWAYS verify the current kubectl context before running commands
+- ALWAYS check terraform workspace/state before plan or apply
+
+## Repository Structure
+
+```
+[root]/
+├── terraform/              # Infrastructure as Code
+│   ├── modules/            # Reusable Terraform modules
+│   ├── environments/       # Per-environment configurations
+│   │   ├── dev/
+│   │   ├── staging/
+│   │   └── production/
+│   └── state/              # State backend configuration
+├── kubernetes/             # Kubernetes manifests
+│   ├── base/               # Kustomize base manifests
+│   ├── overlays/           # Environment-specific overlays
+│   │   ├── dev/
+│   │   ├── staging/
+│   │   └── production/
+│   └── helm-values/        # Helm chart value files
+├── scripts/                # Operational scripts
+│   ├── deploy/
+│   ├── maintenance/
+│   └── incident/
+├── docs/                   # Architecture documentation
+├── monitoring/             # Dashboards and alert rules
+│   ├── dashboards/
+│   └── alerts/
+└── .claude/                # Claude Code configuration
+    ├── settings.json
+    ├── hooks/
+    └── commands/
+```
+
+## Naming Conventions
+
+- **Resources:** `{project}-{environment}-{service}-{resource-type}`
+- **Namespaces:** `{service}-{environment}`
+- **Branches:** `feat/`, `fix/`, `ops/`, `hotfix/`
+- **Tags:** `v{major}.{minor}.{patch}` (semver)
+- **Commits:** Conventional Commits (`feat:`, `fix:`, `ops:`, `docs:`)
+
+## Common Operations
+
+### Deploying to Staging
+```
+1. Push to `staging` branch or merge PR with `deploy:staging` label
+2. CI runs tests → builds image → pushes to registry
+3. ArgoCD auto-syncs staging environment
+4. Verify: `kubectl get pods -n {service}-staging`
+```
+
+### Deploying to Production
+```
+1. Create release tag: `git tag v{x.y.z} && git push --tags`
+2. CI builds production image with tag
+3. ArgoCD detects new image, waits for manual sync approval
+4. Approve in ArgoCD UI or: `argocd app sync {app-name}`
+5. Monitor rollout: `kubectl rollout status deployment/{service} -n {service}-prod`
+```
+
+### Rollback Procedure
+```
+1. Identify bad revision: `kubectl rollout history deployment/{service}`
+2. Rollback: `kubectl rollout undo deployment/{service} --to-revision={N}`
+3. Verify: `kubectl rollout status deployment/{service}`
+4. Create hotfix branch from last known good tag
+```
+
+### Scaling
+```
+- Temporary: `kubectl scale deployment/{service} --replicas={N}` (non-prod only)
+- Permanent: Update HPA in kubernetes/overlays/{env}/{service}/hpa.yaml
+- Emergency: Contact on-call SRE for production scaling decisions
+```
+
+## Debugging Playbook
+
+When investigating issues, follow this order:
+
+1. **Events:** `kubectl get events -n {ns} --sort-by=.lastTimestamp | tail -20`
+2. **Pod Status:** `kubectl get pods -n {ns} -o wide`
+3. **Logs:** `kubectl logs {pod} -n {ns} --tail=100 --since=5m`
+4. **Previous Logs:** `kubectl logs {pod} -n {ns} --previous` (crash loops)
+5. **Describe:** `kubectl describe pod {pod} -n {ns}`
+6. **Node Health:** `kubectl top nodes` and `kubectl describe node {node}`
+7. **Network:** `kubectl get endpoints -n {ns}` and `kubectl get networkpolicy -n {ns}`
+
+## Alert Response Guide
+
+| Alert | Severity | First Response |
+|-------|----------|----------------|
+| PodCrashLooping | P2 | Check logs, describe pod, check OOM |
+| HighErrorRate | P1 | Check ingress, recent deploys, rollback if needed |
+| NodeNotReady | P2 | Check node events, drain if needed |
+| DiskPressure | P3 | Check PVCs, clean old images |
+| CertExpiring | P3 | Renew via cert-manager, check issuer |
+| HighLatency | P2 | Check HPA, upstream deps, resource limits |
+
+## Team Contacts
+
+| Role | Team | Escalation |
+|------|------|------------|
+| On-call SRE | @sre-team | PagerDuty |
+| Platform Lead | [Name] | Slack #platform |
+| Security | @security-team | Slack #security-incidents |
+| Database | @dba-team | Slack #database |
+
+## Tool Versions
+
+- Terraform: >= [1.7.0]
+- kubectl: >= [1.29.0]
+- Helm: >= [3.14.0]
+- ArgoCD CLI: >= [2.10.0]
+- AWS CLI: >= [2.15.0]
+
+## Output Preferences
+
+When assisting with this project:
+- Format infrastructure changes as tables showing before/after
+- Include the exact commands to run (copy-paste ready)
+- Always show `--dry-run` version first for mutating commands
+- Explain WHY a change is needed, not just what to do
+- Reference specific files in this repo when suggesting changes
+- Use Conventional Commit format for any git commit messages

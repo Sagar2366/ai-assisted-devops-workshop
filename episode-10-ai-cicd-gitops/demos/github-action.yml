@@ -1,0 +1,144 @@
+# .github/workflows/ai-code-review.yml
+# AI-Powered Code Review GitHub Action
+# Triggers on every PR to run automated code review using Claude API
+
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Get PR diff
+        id: get-diff
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} > pr_diff.txt
+          echo "diff_size=$(wc -c < pr_diff.txt)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check diff size
+        id: check-size
+        run: |
+          DIFF_SIZE=${{ steps.get-diff.outputs.diff_size }}
+          if [ "$DIFF_SIZE" -eq 0 ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Empty diff — skipping review"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run AI Code Review
+        if: steps.check-size.outputs.skip != 'true'
+        run: |
+          python3 << 'EOF'
+          import anthropic
+          import sys
+          import os
+
+          # Read the diff
+          with open("pr_diff.txt", "r") as f:
+              diff = f.read()
+
+          # Truncate very large diffs
+          if len(diff) > 60000:
+              diff = diff[:60000] + "\n\n[... diff truncated at 60000 chars ...]"
+
+          SYSTEM_PROMPT = """You are a senior code reviewer running as an automated GitHub Action.
+          Review the PR diff and provide feedback in this Markdown format:
+
+          ## AI Code Review
+
+          ### Critical Issues
+          (Security vulnerabilities, data loss risks, or bugs that MUST be fixed before merge.
+          If none found, write "No critical issues found.")
+
+          ### Suggestions
+          (Performance improvements, better error handling, code clarity improvements.
+          Limit to top 3 most impactful suggestions.)
+
+          ### Summary
+          One paragraph: is this PR safe to merge? What's the overall quality?
+
+          Rules:
+          - Be concise — developers read this in PR notifications
+          - Skip trivial style issues (formatting, naming preferences)
+          - Focus on correctness, security, and production reliability
+          - If the diff is a docs-only change, just confirm it looks good
+          - End with exactly one of: "Verdict: APPROVE" or "Verdict: CHANGES_REQUESTED"
+          """
+
+          client = anthropic.Anthropic()
+
+          try:
+              message = client.messages.create(
+                  model="claude-sonnet-4-20250514",
+                  max_tokens=4096,
+                  system=SYSTEM_PROMPT,
+                  messages=[
+                      {"role": "user", "content": f"Review this PR diff:\n\n```diff\n{diff}\n```"}
+                  ]
+              )
+              review = message.content[0].text
+          except Exception as e:
+              review = f"## AI Code Review\n\n⚠️ Review failed: {str(e)}\n\nPlease review manually."
+              with open("review_output.md", "w") as f:
+                  f.write(review)
+              sys.exit(0)  # Don't block PR on API failure
+
+          with open("review_output.md", "w") as f:
+              f.write(review)
+
+          print(review)
+
+          # Exit with error if critical issues require changes
+          if "CHANGES_REQUESTED" in review:
+              print("\n::warning::AI review found issues that need attention")
+          EOF
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Post review comment
+        if: steps.check-size.outputs.skip != 'true'
+        run: |
+          if [ -f review_output.md ]; then
+            # Add a footer to identify this as an automated review
+            echo "" >> review_output.md
+            echo "---" >> review_output.md
+            echo "_Automated review by AI Code Reviewer | [How this works](https://github.com/Sagar2366/ai-assisted-devops-workshop)_" >> review_output.md
+
+            gh pr comment ${{ github.event.pull_request.number }} \
+              --body-file review_output.md
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip notification
+        if: steps.check-size.outputs.skip == 'true'
+        run: echo "PR has no diff — AI review skipped"
